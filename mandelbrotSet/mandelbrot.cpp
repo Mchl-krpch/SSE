@@ -15,13 +15,15 @@ typedef  uint8_t     u8;
 typedef uint32_t    u32;
 typedef  int64_t    s64;
 
-const float  WINDOW_WIDTH   =  888;
-const float  WINDOW_HEIGHT  =  596;
-const s64    SCREEN_WIDTH   = 1920;
-const s64    SCREEN_HEIGHT  = 1080;
-const double R2             =   10;
+const float  windowWidth   = 1200;
+const float  windowHeight  =  800;
+const s64    screenWidth   = 1920;
+const s64    screenHeight  = 1080;
+const double R2            =   20;
 
-const u32    MAX_CHECK               = 64;
+const int    mouseMovementSensivity  = 25000;
+
+const u32    MAX_CHECK               = 32;
 const u32    BLACK_COLOR_PIXEL       = 0xFF000000;
 const double MOUSE_WHEEL_SENSITIVITY = 0.05;
 
@@ -69,22 +71,22 @@ struct coordinates
 
 	void getCoordinates(sf::RenderWindow& window)
 	{
-		sf::Vector2f position = (sf::Vector2f)sf::Mouse::getPosition();
+		sf::Vector2f position;
 
-		position.x = (position.x - SCREEN_WIDTH  / 2) - (window.getPosition().x - WINDOW_WIDTH  / 2 - 70);
-		position.y = (position.y - SCREEN_HEIGHT / 2) - (window.getPosition().y - WINDOW_HEIGHT / 2 + 60);
+		position.x = sf::Mouse::getPosition().x - window.getPosition().x - (windowWidth / 2);
+		position.y = sf::Mouse::getPosition().y - window.getPosition().y - (windowHeight / 2);
 
 		// printf("%f %f\n", position.x, position.y);
 
-		rel_x_coef = ((float)(-1 * (int)position.x) / 16000);
-		rel_y_coef = ((float)(-1 * (int)position.y) / 16000);
+		rel_x_coef = ((float)(-1 * (int)position.x) / mouseMovementSensivity);
+		rel_y_coef = ((float)(-1 * (int)position.y) / mouseMovementSensivity);
 	}
 };
 
 class winXdApp
 {
 private:
-	MARGINS          margins = {};
+	MARGINS          margins      = {};
 
 	sf::Event        event;
 	sf::Vector2i     cur_pos;
@@ -96,43 +98,49 @@ private:
 
 	sf::Texture      texture;
 	sf::Sprite       set;
-	sf::Color        textColor    = { 0x00, 0x00, 0x00, 0xFF };
+
+	sf::Color        textColor    = { 0x00, 0x00, 0x00, 0xFF       };
 	sf::Color        textSubColor = { 0x00, 0x00, 0x00, 0xFF * 0.8 };
-	sf::Color        bodyColor    = { 0xFF, 0xFF, 0xFF, 0xFF };  // { 8, 28, 35, 255 };
+	sf::Color        bodyColor    = { 0xFF, 0xFF, 0xFF, 0xFF       };  // { 8, 28, 35, 255 };
 
-	coordinates mousePosition;
+	coordinates      mousePosition;
 
-	double scale = 0.23;
-	double x_shift = -0.3, y_shift = 0;
-
+	double scale   = 0.23;
+	double x_shift = -0.3;
+	double y_shift =    0;
 	bool isPressed = false;
+
+	const int boarderSize =  3;
+	const int textSize    = 14;
+	const int upperPanelH = 20;
 
 	void renderSet(unsigned int* pixels) {
 
 		size_t pixels_pos = 0;
 
-		for (size_t y = 0; y < WINDOW_HEIGHT; y++) {
+		for (size_t y = 0; y < windowHeight; y++) {
 
-			double Im_num = ((double)y / WINDOW_WIDTH - 0.5 * WINDOW_HEIGHT / WINDOW_WIDTH) / scale + y_shift;
+			double Im_num = ((double)y / windowWidth - 0.5 * windowHeight / windowWidth) / scale + y_shift;
 
-			for (size_t x = 0; x < WINDOW_WIDTH; x += 4) {
+			for (size_t x = 0; x < windowWidth; x += 4) {
 
 				sse_t Re = _mm256_set_pd(0, 1, 2, 3);
 
 				Re = _mm256_add_pd(Re, _mm256_set1_pd((double)x));
-				Re = _mm256_div_pd(Re, _mm256_set1_pd(WINDOW_WIDTH));
+				Re = _mm256_div_pd(Re, _mm256_set1_pd(windowWidth));
 				Re = _mm256_sub_pd(Re, _mm256_set1_pd(0.5));
 				Re = _mm256_div_pd(Re, _mm256_set1_pd(scale));
 				Re = _mm256_add_pd(Re, _mm256_set1_pd(x_shift));
 
 				sse_t Re0 = Re;
-				// It's SSE-function move
+
+				// sse move
 				sse_t Im = _mm256_set1_pd(Im_num);
 				sse_t Im0 = Im;
 
 				sse_t colored = _mm256_set1_pd(0);
 
-				// All BLACK_COLOR_PIXEL
+				// black screen
 				for (int i_pixel = 0; i_pixel < 4; i_pixel++)
 					*(pixels + pixels_pos + i_pixel) = BLACK_COLOR_PIXEL;
 
@@ -250,84 +258,96 @@ public:
 
 	void drawFrame(sf::RenderWindow& window)
 	{
-		u32* pixels = (u32*)calloc((size_t)WINDOW_HEIGHT * (size_t)WINDOW_WIDTH, sizeof(u32));
-		margins = {};
 		margins.cxLeftWidth = -1;
 
 		fpsCounter fps;
-		fpsString.setPosition(sf::Vector2f(144, 1));
-		fpsString.setFillColor(textSubColor);
-		fpsString.setFont(winReg);
-		fpsString.setCharacterSize(14);
+		fpsString.setPosition       (sf::Vector2f(144, 1));
+		fpsString.setFillColor      (textSubColor);
+		fpsString.setFont           (winReg);
+		fpsString.setCharacterSize  (textSize);
 
-		window.create(sf::VideoMode(888, 620), "winXd", sf::Style::None);
+		window.create(
+			sf::VideoMode(windowWidth + 2 * boarderSize, upperPanelH + windowHeight + boarderSize),
+			"winXd",
+			sf::Style::None);
+
 		setIcon(window, "res/icon.png");
+
+		// Make window transparent in some places
 		SetWindowLong(window.getSystemHandle(), GWL_STYLE, WS_POPUP | WS_VISIBLE);
 		DwmExtendFrameIntoClientArea(window.getSystemHandle(), &margins);
 
-		winBold.loadFromFile("res/consBold.ttf");
-		winReg.loadFromFile("res/consReg.ttf");
+		winBold.loadFromFile ("res/consBold.ttf");
+		winReg.loadFromFile  ("res/consReg.ttf");
 
-		sf::Text name("winXd", winBold, 14);
-		name.setFillColor(textColor);
-		name.setPosition(sf::Vector2f(6, 1));
+		sf::Text name        ("winXd", winBold, textSize);
+		name.setFillColor    (textColor);
+		name.setPosition     (sf::Vector2f(6, 1));
 
-		sf::Text subName(":mandelbrot", winReg, 14);
-		subName.setFillColor(textSubColor);
-		subName.setPosition(sf::Vector2f(47, 1));
+		sf::Text subName     (":mandelbrot", winReg, textSize);
+		subName.setFillColor (textSubColor);
+		subName.setPosition  (sf::Vector2f(47, 1));
 
-		sf::Text info("Esc:close V:minimize", winReg, 14);
-		info.setFillColor(textSubColor);
-		info.setPosition(sf::Vector2f(723, 1));
+		sf::Text info        ("Esc:close V:minimize", winReg, textSize);
+		info.setFillColor    (textSubColor);
+		info.setPosition     (sf::Vector2f(windowWidth + 2 * boarderSize - 165, 1));
 
 		// Upper panel
 		sf::RectangleShape windowFrame;
-		setRectSettings(windowFrame, sf::Vector2f(890, 20),	bodyColor,	0, 0);
+		setRectSettings(windowFrame, sf::Vector2f(windowWidth + 2 * boarderSize, upperPanelH), bodyColor, 0, 0);
 
 		// Inner content
 		sf::RectangleShape windowContent;
-		setRectSettings(windowContent, sf::Vector2f(884, 597), sf::Color(5, 17, 21, 255), 3, 20);
+		setRectSettings(windowContent, sf::Vector2f(windowWidth, windowHeight), sf::Color(5, 17, 21, 255), boarderSize, upperPanelH);
 
 		// left border
 		sf::RectangleShape left;
-		setRectSettings(left, sf::Vector2f(3, 600), bodyColor, 0, 20);
+		setRectSettings(left, sf::Vector2f(boarderSize, boarderSize + windowHeight), bodyColor, 0, upperPanelH);
 
 		// right border
 		sf::RectangleShape right;
-		setRectSettings(right, sf::Vector2f(3, 600), bodyColor, 885, 20);
+		setRectSettings(right, sf::Vector2f(boarderSize, boarderSize + windowHeight), bodyColor, windowWidth + boarderSize, upperPanelH);
 
 		// bottom border
 		sf::RectangleShape bottom;
-		setRectSettings(bottom, sf::Vector2f(884, 3), bodyColor, 3, 617);
+		setRectSettings(bottom, sf::Vector2f(windowWidth, boarderSize), bodyColor, boarderSize, upperPanelH + windowHeight);
 
-		texture.create((u32)WINDOW_WIDTH, (u32)WINDOW_HEIGHT);
-		set.setTextureRect(sf::IntRect(0, 0, (int)WINDOW_WIDTH, (int)WINDOW_HEIGHT));
-		set.setPosition(sf::Vector2f(3, 20));
+		// Prepare set.
+		u32* pixels = (u32*)calloc((size_t)windowHeight * (size_t)windowWidth, sizeof(u32));
+
+		texture.create((u32)windowWidth, (u32)windowHeight);
+		set.setTextureRect(sf::IntRect(0, 0, (int)windowWidth, (int)windowHeight));
+		set.setPosition(sf::Vector2f(boarderSize, upperPanelH));
 		set.setTexture(texture, false);
 		
 		while (window.isOpen())
 		{
 			getBehavior(window, event);
 
-			window.clear(sf::Color::Transparent);
-			window.draw(windowFrame);
-			window.draw(windowContent);
+			// Draw window
+			window.clear  (sf::Color::Transparent);
+			window.draw   (windowFrame);
+			window.draw   (windowContent);
 
-			window.draw(name);
-			window.draw(subName);
-			window.draw(info);
+			window.draw   (name);
+			window.draw   (subName);
+			window.draw   (info);
 
 			mousePosition.getCoordinates(window);
-			renderSet(pixels);
+
+			// Draw set
+			renderSet     (pixels);
 			texture.update((u8*)pixels);
-			window.draw(set);
+			window.draw   (set);
 
-			window.draw(right);
-			window.draw(left);
-			window.draw(bottom);
+			// Draw borders of window
+			window.draw   (right);
+			window.draw   (left);
+			window.draw   (bottom);
 
-			fps.Renew(fpsString);
-			window.draw(fpsString);
+			// Add fps
+			fps.Renew     (fpsString);
+			window.draw   (fpsString);
 
 			window.display();
 		}
@@ -336,7 +356,6 @@ public:
 
 int main()
 {
-	printf("winXd\n");
 	winXdApp winXd;
 	winXd.drawFrame(winXd.window);
 
