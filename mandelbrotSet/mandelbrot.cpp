@@ -69,6 +69,8 @@ struct fpsCounter
 			snprintf(str + 4, 26, "%.2lf\n", (float)(1 / (time_now - time_prev)));
 			fpsLabel.setString(str);
 
+			printf("%s\n", str);
+
 			time_last_out = time_now;
 		}
 
@@ -438,7 +440,7 @@ public:
 			mousePosition.getCoordinates(window);
 
 			// Draw set
-			renderSet     (pixels);
+			renderSet512  (pixels);
 			texture.update((u8*)pixels);
 			window.draw   (set);
 
