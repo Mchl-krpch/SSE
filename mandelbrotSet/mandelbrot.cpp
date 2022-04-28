@@ -4,14 +4,21 @@
 #include <SFML/Graphics.hpp>
 
 // For special mode of window
+#ifdef _WIN32
+
 #include <Dwmapi.h>
 #pragma comment (lib, "Dwmapi.lib")
+
+// For visual studio to not scream
+#define snprintf sprintf_s
+
+#endif
 
 // For _m256
 #include <immintrin.h>
 
 typedef  __m256   sse_t;
-typedef  __m512   sse_t2;
+typedef  __m512  sse_t512;
 typedef  uint8_t     u8;
 typedef uint32_t    u32;
 typedef  int64_t    s64;
@@ -31,6 +38,10 @@ const float  MOUSE_WHEEL_SENSITIVITY = 0.05;
 const sse_t FULL_COLORED = _mm256_cmp_ps(_mm256_set1_ps(0), _mm256_set1_ps(0), _CMP_EQ_OQ);
 const sse_t MUL_2        = _mm256_set1_ps(2.0);
 const sse_t R_NEED       = _mm256_set1_ps(100);
+
+const uint16_t FULL_COLORED512 = 0xFFFF;
+const sse_t512 MUL_512         = _mm512_set1_ps(2.0);
+const sse_t512 R_NEED512       = _mm512_set1_ps(100);
 
 
 struct fpsCounter
@@ -55,7 +66,7 @@ struct fpsCounter
 		{
 			float cur_fps = (float)(1 / (time_now - time_prev));
 
-			sprintf_s(str + 4, 26, "%.2lf\n", (float)(1 / (time_now - time_prev)));
+			snprintf(str + 4, 26, "%.2lf\n", (float)(1 / (time_now - time_prev)));
 			fpsLabel.setString(str);
 
 			time_last_out = time_now;
@@ -87,7 +98,9 @@ struct coordinates
 class winXdApp
 {
 private:
-	MARGINS          margins      = {};
+	#ifdef _WIN32
+	MARGINS margins = { margins.cxLeftWidth = -1 };
+	#endif
 
 	sf::Event        event;
 	sf::Vector2i     cur_pos;
@@ -100,9 +113,9 @@ private:
 	sf::Texture      texture;
 	sf::Sprite       set;
 
-	sf::Color        textColor    = { 0x00, 0x00, 0x00, 0xFF       };
-	sf::Color        textSubColor = { 0x00, 0x00, 0x00, 0xFF * 0.8 };
-	sf::Color        bodyColor    = { 0xFF, 0xFF, 0xFF, 0xFF       };  // { 8, 28, 35, 255 };
+	sf::Color        textColor    = { 0x00, 0x00, 0x00, 0xFF          };
+	sf::Color        textSubColor = { 0x00, 0x00, 0x00, 0xFF * 8 / 10 };
+	sf::Color        bodyColor    = { 0xFF, 0xFF, 0xFF, 0xFF          };  // { 8, 28, 35, 255 };
 
 	coordinates      mousePosition;
 
@@ -162,7 +175,7 @@ private:
 
 					for (int i_cmp = 0; i_cmp < 8; i_cmp++) {
 						if (*((int *)&cmp + i_cmp)) {
-							pixels[pixels_pos + ((s64)3 - i_cmp)] =
+							pixels[pixels_pos + ((s64)7 - i_cmp)] =
 								(u32)(BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
 						}
 					}
@@ -171,6 +184,71 @@ private:
 				}
 
 				pixels_pos += 8;
+			}
+
+		}
+
+		return;
+	}
+
+	void renderSet512(unsigned int* pixels) {
+
+		size_t pixels_pos = 0;
+
+		for (size_t y = 0; y < windowHeight; y++) {
+
+			float Im_num = ((float)y / windowWidth - 0.5 * windowHeight / windowWidth) / scale + y_shift;
+
+			for (size_t x = 0; x < windowWidth; x += 16) {
+
+				sse_t512 Re = _mm512_set_ps(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+
+				Re = _mm512_add_ps(Re, _mm512_set1_ps((float)x   ));
+				Re = _mm512_div_ps(Re, _mm512_set1_ps(windowWidth));
+				Re = _mm512_sub_ps(Re, _mm512_set1_ps(0.5        ));
+				Re = _mm512_div_ps(Re, _mm512_set1_ps(scale      ));
+				Re = _mm512_add_ps(Re, _mm512_set1_ps(x_shift    ));
+
+				sse_t512 Re0 = Re;
+
+				// sse move
+				sse_t512 Im = _mm512_set1_ps(Im_num);
+				sse_t512 Im0 = Im;
+
+				uint16_t colored = 0;
+
+				// black screen
+				for (int i_pixel = 0; i_pixel < 16; i_pixel++)
+					*(pixels + pixels_pos + i_pixel) = BLACK_COLOR_PIXEL;
+
+				sse_t512 Re_2 = _mm512_mul_ps(Re, Re);
+				sse_t512 Im_2 = _mm512_mul_ps(Im, Im);
+
+				for (size_t n = 0; n < MAX_CHECK && colored != FULL_COLORED512; n++) {
+
+					Im = _mm512_fmadd_ps(MUL_512, _mm512_mul_ps(Re, Im), Im0);
+					Re = _mm512_add_ps(_mm512_sub_ps(Re_2, Im_2), Re0);
+
+					Re_2 = _mm512_mul_ps(Re, Re);
+					Im_2 = _mm512_mul_ps(Im, Im);
+
+					uint16_t cmp = (uint16_t)_mm512_cmp_ps_mask(_mm512_add_ps(Re_2, Im_2), R_NEED512, _CMP_GT_OQ);
+
+
+					cmp = (~colored) & cmp;
+					// cmp = _mm512_andnot_ps(colored, cmp);
+
+					for (int i_cmp = 0; i_cmp < 16; i_cmp++) {
+						if (1 & (cmp >> (i_cmp))) {
+							pixels[pixels_pos + ((s64)15 - i_cmp)] =
+								(u32)(BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
+						}
+					}
+
+					colored |= cmp;
+				}
+
+				pixels_pos += 16;
 			}
 
 		}
@@ -192,6 +270,7 @@ private:
 					return;
 				}
 
+				#ifdef _WIN32
 				if (event.key.code == sf::Keyboard::V)
 				{
 					SendNotifyMessageW(
@@ -200,6 +279,7 @@ private:
 						SC_MINIMIZE,
 						0);
 				}
+				#endif
 			}
 
 			if (event.type == sf::Event::MouseWheelMoved) {
@@ -247,7 +327,7 @@ private:
 		rect.setPosition((float)posX, (float)posY);
 	}
 
-	void setIcon(sf::RenderWindow& window, const char* iconName)
+	bool setIcon(sf::RenderWindow& window, const char* iconName)
 	{
 		icon.loadFromFile(iconName);
 		window.setIcon(128, 128, icon.getPixelsPtr());
@@ -258,7 +338,6 @@ public:
 
 	void drawFrame(sf::RenderWindow& window)
 	{
-		margins.cxLeftWidth = -1;
 
 		fpsCounter fps;
 		fpsString.setPosition       (sf::Vector2f(144, 1));
@@ -271,11 +350,14 @@ public:
 			"winXd",
 			sf::Style::None);
 
-		setIcon(window, "res/icon.png");
+		// TODO: check for errors
+		// if (setIcon(window, "res/icon.png"))
 
 		// Make window transparent in some places
+		#ifdef _WIN32
 		SetWindowLong(window.getSystemHandle(), GWL_STYLE, WS_POPUP | WS_VISIBLE);
 		DwmExtendFrameIntoClientArea(window.getSystemHandle(), &margins);
+		#endif
 
 		winBold.loadFromFile ("res/consBold.ttf");
 		winReg.loadFromFile  ("res/consReg.ttf");
