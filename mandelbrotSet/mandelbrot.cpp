@@ -10,7 +10,8 @@
 // For _m256
 #include <immintrin.h>
 
-typedef  __m256d  sse_t;
+typedef  __m256   sse_t;
+typedef  __m512   sse_t2;
 typedef  uint8_t     u8;
 typedef uint32_t    u32;
 typedef  int64_t    s64;
@@ -19,36 +20,36 @@ const float  windowWidth   = 1200;
 const float  windowHeight  =  800;
 const s64    screenWidth   = 1920;
 const s64    screenHeight  = 1080;
-const double R2            =   20;
+const float  R2            =   20;
 
 const int    mouseMovementSensivity  = 25000;
 
 const u32    MAX_CHECK               = 32;
 const u32    BLACK_COLOR_PIXEL       = 0xFF000000;
-const double MOUSE_WHEEL_SENSITIVITY = 0.05;
+const float  MOUSE_WHEEL_SENSITIVITY = 0.05;
 
-const __m256d FULL_COLORED = _mm256_cmp_pd(_mm256_set1_pd(0), _mm256_set1_pd(0), _CMP_EQ_OQ);
-const __m256d MUL_2        = _mm256_set1_pd(2.0);
-const __m256d R_NEED       = _mm256_set1_pd(100);
+const sse_t FULL_COLORED = _mm256_cmp_ps(_mm256_set1_ps(0), _mm256_set1_ps(0), _CMP_EQ_OQ);
+const sse_t MUL_2        = _mm256_set1_ps(2.0);
+const sse_t R_NEED       = _mm256_set1_ps(100);
 
 
 struct fpsCounter
 {
-	sf::Clock clock;
-	sf::Time  time = clock.getElapsedTime();
+	sf::Clock  clock = {};
+	sf::Time   time  = clock.getElapsedTime();
 
-	double time_prev     = time.asSeconds();
-	double time_now      = 0;
-	double time_last_out = 0;
+	float time_prev     = time.asSeconds();
+	float time_now      = 0;
+	float time_last_out = 0;
 
-	const double FPS_DELAY = 0.15;
+	const float FPS_DELAY = 0.15;
 
 	char str[32] = "fps:";
 
 	void Renew(sf::Text& fpsLabel)
 	{
-		time = clock.getElapsedTime();
-		time_now = time.asSeconds();
+		time     = clock.getElapsedTime  ();
+		time_now = time.asSeconds        ();
 
 		if (time_now - time_last_out > FPS_DELAY)
 		{
@@ -78,8 +79,8 @@ struct coordinates
 
 		// printf("%f %f\n", position.x, position.y);
 
-		rel_x_coef = ((float)(-1 * (int)position.x) / mouseMovementSensivity);
-		rel_y_coef = ((float)(-1 * (int)position.y) / mouseMovementSensivity);
+		rel_x_coef = ((float)(-1 * (float)position.x) / mouseMovementSensivity);
+		rel_y_coef = ((float)(-1 * (float)position.y) / mouseMovementSensivity);
 	}
 };
 
@@ -105,10 +106,10 @@ private:
 
 	coordinates      mousePosition;
 
-	double scale   = 0.23;
-	double x_shift = -0.3;
-	double y_shift =    0;
-	bool isPressed = false;
+	float scale   = 0.23;
+	float x_shift = -0.3;
+	float y_shift =    0;
+	bool  isPressed = false;
 
 	const int boarderSize =  3;
 	const int textSize    = 14;
@@ -120,63 +121,62 @@ private:
 
 		for (size_t y = 0; y < windowHeight; y++) {
 
-			double Im_num = ((double)y / windowWidth - 0.5 * windowHeight / windowWidth) / scale + y_shift;
+			float Im_num = ((float)y / windowWidth - 0.5 * windowHeight / windowWidth) / scale + y_shift;
 
-			for (size_t x = 0; x < windowWidth; x += 4) {
+			for (size_t x = 0; x < windowWidth; x += 8) {
 
-				sse_t Re = _mm256_set_pd(0, 1, 2, 3);
+				sse_t Re = _mm256_set_ps(0, 1, 2, 3, 4, 5, 6, 7);
 
-				Re = _mm256_add_pd(Re, _mm256_set1_pd((double)x));
-				Re = _mm256_div_pd(Re, _mm256_set1_pd(windowWidth));
-				Re = _mm256_sub_pd(Re, _mm256_set1_pd(0.5));
-				Re = _mm256_div_pd(Re, _mm256_set1_pd(scale));
-				Re = _mm256_add_pd(Re, _mm256_set1_pd(x_shift));
+				Re = _mm256_add_ps(Re, _mm256_set1_ps((float)x   ));
+				Re = _mm256_div_ps(Re, _mm256_set1_ps(windowWidth));
+				Re = _mm256_sub_ps(Re, _mm256_set1_ps(0.5        ));
+				Re = _mm256_div_ps(Re, _mm256_set1_ps(scale      ));
+				Re = _mm256_add_ps(Re, _mm256_set1_ps(x_shift    ));
 
 				sse_t Re0 = Re;
 
 				// sse move
-				sse_t Im = _mm256_set1_pd(Im_num);
+				sse_t Im = _mm256_set1_ps(Im_num);
 				sse_t Im0 = Im;
 
-				sse_t colored = _mm256_set1_pd(0);
+				sse_t colored = _mm256_set1_ps(0);
 
 				// black screen
-				for (int i_pixel = 0; i_pixel < 4; i_pixel++)
+				for (int i_pixel = 0; i_pixel < 8; i_pixel++)
 					*(pixels + pixels_pos + i_pixel) = BLACK_COLOR_PIXEL;
 
-				sse_t Re_2 = _mm256_mul_pd(Re, Re);
-				sse_t Im_2 = _mm256_mul_pd(Im, Im);
+				sse_t Re_2 = _mm256_mul_ps(Re, Re);
+				sse_t Im_2 = _mm256_mul_ps(Im, Im);
 
-				for (size_t n = 0; n < MAX_CHECK && !_mm256_testc_pd(colored, FULL_COLORED); n++) {
+				for (size_t n = 0; n < MAX_CHECK && !_mm256_testc_ps(colored, FULL_COLORED); n++) {
 
-					Im = _mm256_fmadd_pd(MUL_2, _mm256_mul_pd(Re, Im), Im0);
-					Re = _mm256_add_pd(_mm256_sub_pd(Re_2, Im_2), Re0);
+					Im = _mm256_fmadd_ps(MUL_2, _mm256_mul_ps(Re, Im), Im0);
+					Re = _mm256_add_ps(_mm256_sub_ps(Re_2, Im_2), Re0);
 
-					Re_2 = _mm256_mul_pd(Re, Re);
-					Im_2 = _mm256_mul_pd(Im, Im);
+					Re_2 = _mm256_mul_ps(Re, Re);
+					Im_2 = _mm256_mul_ps(Im, Im);
 
-					sse_t cmp = _mm256_cmp_pd(_mm256_add_pd(Re_2, Im_2), R_NEED, _CMP_GT_OQ);
+					sse_t cmp = _mm256_cmp_ps(_mm256_add_ps(Re_2, Im_2), R_NEED, _CMP_GT_OQ);
 
-					cmp = _mm256_andnot_pd(colored, cmp);
+					cmp = _mm256_andnot_ps(colored, cmp);
 
-					for (int i_cmp = 0; i_cmp < 4; i_cmp++) {
-						if (*((long long*)&cmp + i_cmp)) {
+					for (int i_cmp = 0; i_cmp < 8; i_cmp++) {
+						if (*((int *)&cmp + i_cmp)) {
 							pixels[pixels_pos + ((s64)3 - i_cmp)] =
 								(u32)(BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
 						}
 					}
 
-					colored = _mm256_or_pd(colored, cmp);
+					colored = _mm256_or_ps(colored, cmp);
 				}
 
-				pixels_pos += 4;
+				pixels_pos += 8;
 			}
 
 		}
 
 		return;
 	}
-
 
 	void getBehavior(sf::RenderWindow& window, sf::Event& event)
 	{
@@ -205,8 +205,8 @@ private:
 			if (event.type == sf::Event::MouseWheelMoved) {
 				scale *= 1 + MOUSE_WHEEL_SENSITIVITY * event.mouseWheel.delta;
 
-				x_shift -= (double)mousePosition.rel_x_coef * event.mouseWheel.delta / scale;
-				y_shift -= (double)mousePosition.rel_y_coef * event.mouseWheel.delta / scale;
+				x_shift -= (float)mousePosition.rel_x_coef * event.mouseWheel.delta / scale;
+				y_shift -= (float)mousePosition.rel_y_coef * event.mouseWheel.delta / scale;
 			}
 
 			if (event.type == sf::Event::MouseButtonPressed) {
@@ -294,31 +294,51 @@ public:
 
 		// Upper panel
 		sf::RectangleShape windowFrame;
-		setRectSettings(windowFrame, sf::Vector2f(windowWidth + 2 * boarderSize, upperPanelH), bodyColor, 0, 0);
+		setRectSettings(
+			windowFrame,
+			sf::Vector2f(windowWidth + 2 * boarderSize, upperPanelH),
+			bodyColor,
+			0, 0);
 
 		// Inner content
 		sf::RectangleShape windowContent;
-		setRectSettings(windowContent, sf::Vector2f(windowWidth, windowHeight), sf::Color(5, 17, 21, 255), boarderSize, upperPanelH);
+		setRectSettings(
+			windowContent,
+			sf::Vector2f(windowWidth, windowHeight),
+			sf::Color(5, 17, 21, 255),
+			boarderSize, upperPanelH);
 
 		// left border
 		sf::RectangleShape left;
-		setRectSettings(left, sf::Vector2f(boarderSize, boarderSize + windowHeight), bodyColor, 0, upperPanelH);
+		setRectSettings(
+			left,
+			sf::Vector2f(boarderSize, boarderSize + windowHeight),
+			bodyColor,
+			0, upperPanelH);
 
 		// right border
 		sf::RectangleShape right;
-		setRectSettings(right, sf::Vector2f(boarderSize, boarderSize + windowHeight), bodyColor, windowWidth + boarderSize, upperPanelH);
+		setRectSettings(
+			right,
+			sf::Vector2f(boarderSize, boarderSize + windowHeight),
+			bodyColor,
+			windowWidth + boarderSize, upperPanelH);
 
 		// bottom border
 		sf::RectangleShape bottom;
-		setRectSettings(bottom, sf::Vector2f(windowWidth, boarderSize), bodyColor, boarderSize, upperPanelH + windowHeight);
+		setRectSettings(
+			bottom,
+			sf::Vector2f(windowWidth, boarderSize),
+			bodyColor,
+			boarderSize, upperPanelH + windowHeight);
 
 		// Prepare set.
 		u32* pixels = (u32*)calloc((size_t)windowHeight * (size_t)windowWidth, sizeof(u32));
 
-		texture.create((u32)windowWidth, (u32)windowHeight);
-		set.setTextureRect(sf::IntRect(0, 0, (int)windowWidth, (int)windowHeight));
-		set.setPosition(sf::Vector2f(boarderSize, upperPanelH));
-		set.setTexture(texture, false);
+		texture.create     ((u32)windowWidth, (u32)windowHeight);
+		set.setTextureRect (sf::IntRect(0, 0, (int)windowWidth, (int)windowHeight));
+		set.setPosition    (sf::Vector2f(boarderSize, upperPanelH));
+		set.setTexture     (texture, false);
 		
 		while (window.isOpen())
 		{
