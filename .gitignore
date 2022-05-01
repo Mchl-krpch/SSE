@@ -1,15 +1,8 @@
+# Debug libs
 mandel2
 mandelbrotSet/old
 mandelbrotSet/SFML-2.5.1
-
-# Prerequisites
-*.d
-
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+test/
 
 # Linker output
 *.ilk
@@ -20,20 +13,12 @@ mandelbrotSet/SFML-2.5.1
 *.gch
 *.pch
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
 # Shared objects (inc. Windows DLLs)
-*.dll
 *.so
 *.so.*
 *.dylib
 
 # Executables
-*.exe
 *.out
 *.app
 *.i*86
