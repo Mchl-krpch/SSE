@@ -1,5 +1,8 @@
 ## Set drawing
 
+If you want to run the application, download the archive or
+go to the RELEASES section on github.</br>
+
 ![set](application.gif)
 
 This is a small application that renders the mandelbrot set. You can find similar
