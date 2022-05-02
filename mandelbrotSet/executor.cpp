@@ -1,5 +1,7 @@
 // My module
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 #include "winXd.hpp"
 #include "mandelbrot.hpp"

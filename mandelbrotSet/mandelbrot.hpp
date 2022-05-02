@@ -7,7 +7,9 @@
 #include <immintrin.h>
 #include <emmintrin.h>
 // For __cpuid
+#ifdef _WIN32
 #include <intrin.h>
+#endif
 #include <SFML/Graphics.hpp>
 
 // FOR AVX 256
@@ -145,6 +147,7 @@ typedef struct
 
 } coordinates;
 
+#ifdef _MSC_VER
 bool IsAVX512InTouch()
 {
 	// if num liaves < 7, then avx512 is not availavle.
@@ -162,6 +165,12 @@ bool IsAVX512InTouch()
 
 	return false;
 }
+#else
+bool IsAVX512InTouch()
+{
+	return true;
+}
+#endif
 
 void renderSetAVX512f(const int windowWidth, const int windowHeight, mandelbrot *set)
 {

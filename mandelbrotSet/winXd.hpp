@@ -1,8 +1,11 @@
 #ifndef _winXd_
 #define _winXd_
 
-#include <SFML/Graphics.hpp>
+#ifdef _WIN32
 #include <windows.h>
+#endif
+
+#include <SFML/Graphics.hpp>
 #include <stdint.h>
 
 #include "mandelbrot.hpp"
@@ -214,6 +217,7 @@ private:
 		{
 			if (set->MAX_CHECK == 0)
 			{
+				#ifdef _WIN32
 				MessageBox(NULL,
 					"You can not make the number\n"
 					"of drawn levels negative)",
@@ -221,6 +225,7 @@ private:
 					"you are trying to make a negative number of colors",
 
 					0);
+				#endif
 			}
 			else
 			{
@@ -238,11 +243,13 @@ private:
 
 		if (event.key.code == sf::Keyboard::V)
 		{
+			#ifdef _WIN32
 			SendNotifyMessageW(
 				window.getSystemHandle(),
 				WM_SYSCOMMAND,
 				SC_MINIMIZE,
 				0);
+			#endif
 		}
 
 		if (event.key.code == sf::Keyboard::O)
@@ -297,10 +304,12 @@ private:
 public:
 	void create(const char *name)
 	{
+
 		bool AVX512_AVAILABLE = IsAVX512InTouch();
 		if (!AVX512_AVAILABLE)
 		{
 			// 4й аргумент - стиль иконки, кнопки
+			#ifdef _WIN32
 			MessageBox(NULL,
 				"unfortunately, there's nothing to be done, the fact is that some processors "
 				"do not support avx512. In this case, two exhaustive options can be considered."
@@ -308,11 +317,17 @@ public:
 
 				"AVX512 not supported...",
 				0);
+			#else
+			printf("unfortunately, there's nothing to be done, the fact is that some processors "
+				"do not support avx512. In this case, two exhaustive options can be considered."
+				"The first is to rent a server, the second is to buy a new computer.");
+			#endif
 		}
 
 		// Try to load data.
 		if (!bold.loadFromFile(BOLD_FONT_PTR))
 		{
+			#ifdef _WIN32
 			MessageBox(NULL,
 				"I think you misplaced the fonts folder,\n"
 				"check if the font file should be located\n"
@@ -322,10 +337,17 @@ public:
 				"Application failed to load bold font",
 
 				0);
+			#else
+			printf("I think you misplaced the fonts folder,\n"
+				"check if the font file should be located\n"
+				"at the relative address res/bold.ttf\n"
+				"relative to the executable .exe file");
+			#endif
 		}
 
 		if (!reg.loadFromFile(REG_FONT_PTR))
 		{
+			#ifdef _WIN32
 			MessageBox(NULL,
 				"I think you misplaced the fonts folder,\n"
 				"check if the font file should be located\n"
@@ -335,6 +357,7 @@ public:
 				"Application failed to load regular font",
 
 				0);
+			#endif
 		}
 
 		// Set settings to upper panel.
@@ -370,6 +393,7 @@ public:
 
 		if (!icon.loadFromFile(ICON_PTR))
 		{
+			#ifdef _WIN32
 			MessageBox(NULL,
 				"most likely the matter is in the location\n"
 				"of the icon, do you have it at the\n"
@@ -379,6 +403,7 @@ public:
 				"failed to load image",
 
 				0);
+			#endif
 		}
 
 		window.setIcon(STD_ICON_SIZE, STD_ICON_SIZE, icon.getPixelsPtr());
@@ -400,7 +425,7 @@ public:
 		set.setModeString(reg, HEIGHT - 120, renderMode);
 
 		time_t timeSpend = 0;
-		time_t startTime = clock();
+		time_t startTime = clock() / CLOCKS_PER_SEC;
 		isTesting = false;
 
 		sf::Text testString("TESTING", bold, 24);
@@ -433,13 +458,14 @@ public:
 
 			if (isTesting)
 			{
-				timeSpend = clock() - startTime;
-				set.renew(set.fpsString);
+				timeSpend = clock() / CLOCKS_PER_SEC - startTime;
+				printf("clock %ld\n", timeSpend);
 				
-				if (timeSpend > TESTING_TIME_DELAY)
+				set.renew(set.fpsString);
+
+				if (timeSpend > 3)
 				{
-					printf("clock\n");
-					startTime = clock();
+					startTime = clock() / CLOCKS_PER_SEC;
 					
 					setTexture.update((uint8_t *)set.pixels);
 					setRender.setTexture(setTexture, false);
