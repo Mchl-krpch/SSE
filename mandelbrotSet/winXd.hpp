@@ -306,6 +306,7 @@ public:
 	{
 
 		bool AVX512_AVAILABLE = IsAVX512InTouch();
+		isAVX512supported = true;
 		if (!AVX512_AVAILABLE)
 		{
 			// 4й аргумент - стиль иконки, кнопки

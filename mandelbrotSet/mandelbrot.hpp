@@ -48,7 +48,6 @@ typedef struct
 
 	void setModeString(sf::Font& font, const int height, int mode)
 	{
-
 		char string[256] = "";
 		strcpy(string, "render mode:");
 
