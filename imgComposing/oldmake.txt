@@ -1,0 +1,41 @@
+
+# Compiler settings.
+CC     =  g++
+CFLAGS = 
+LIBS   = -lSDL2
+QUITE  = 
+
+# Folders with library on computer
+	INCLUDE_PTR = "SDL2-2.0.22\include"
+	LIBRARY_PTR = "SDL2-2.0.22\build"
+	BUILD_LIB   = build
+
+# Files to compile.
+TARGET     = main
+TARGET_RES = my
+
+# Output file name.
+EXECUTABLE = compose
+
+
+# Check different types of make process
+
+ifeq ($(MAKE_MODE), DEBUG)
+all: compile clean
+endif
+
+ifeq ($(MAKE_MODE), RUN)
+QUITE += @
+all: compile execute
+endif
+
+execute: $(BUILD_LIB)\\$(EXECUTABLE).exe
+	$(QUITE)$(BUILD_LIB)\\$(EXECUTABLE)
+
+compile: $(TARGET).cpp
+	@cls
+	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp -o $(BUILD_LIB)\\$(TARGET).o
+	$(QUITE) $(CC) $(BUILD_LIB)\\$(TARGET).o -L$(LIBRARY_PTR) $(LIBS) -o $(BUILD_LIB)\\$(EXECUTABLE).exe
+
+clean:
+	del *.exe *.o

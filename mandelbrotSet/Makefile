@@ -18,15 +18,16 @@
 
 
 # Compiler settings.
-CC     = g++
-RES_CC = windres
-CFLAGS = -mavx -mavx512f -mfma
-LIBS   = -lsfml-graphics -lsfml-window -lsfml-system
-QUITE  = 
+CC      = g++
+RES_CC  = windres
+CFLAGS  = -mavx -mavx512f -mfma
+LIBS    = -lsfml-graphics -lsfml-window -lsfml-system
+QUITE   = 
+CONSOLE =
 
 # Folders with library on computer
-	INCLUDE_PTR = "C:\Users\Xiaomi\Documents\C\SSE\test\SFML-2.5.1\include"
-	LIBRARY_PTR = "C:\Users\Xiaomi\Documents\C\SSE\test\SFML-2.5.1\build\lib"
+	INCLUDE_PTR = "SFML-2.5.1\include"
+	LIBRARY_PTR = "SFML-2.5.1\build\lib"
 	BUILD_LIB   = build
 
 # Files to compile.
@@ -55,7 +56,7 @@ compile: $(TARGET).cpp
 	@cls
 	$(QUITE) $(RES_CC) $(TARGET_RES).rc -O coff -o $(TARGET_RES).res
 	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp -o $(BUILD_LIB)\\$(TARGET).o
-	$(QUITE) $(CC) -mwindows $(BUILD_LIB)\\$(TARGET).o $(TARGET_RES).res -L$(LIBRARY_PTR) $(LIBS) -o $(BUILD_LIB)\\$(EXECUTABLE).exe
+	$(QUITE) $(CC) $(CONSOLE) $(BUILD_LIB)\\$(TARGET).o $(TARGET_RES).res -L$(LIBRARY_PTR) $(LIBS) -o $(BUILD_LIB)\\$(EXECUTABLE).exe
 
 clean:
 	del $(BUILD_LIB)\\$(EXECUTABLE).exe $(BUILD_LIB)\\*.o

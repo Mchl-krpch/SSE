@@ -1,23 +1,34 @@
 #ifndef _winXd_
 #define _winXd_
 
-#include "mandelbrot.hpp"
-
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <stdint.h>
 
-#define BUF_LEN 256
+#include "mandelbrot.hpp"
+
+const int BUF_LEN = 256;
 
 const int STD_ICON_SIZE = 128;
 const int STD_FONT_SIZE = 14;
 const int MARGIN        = 10;
 
+const char *BOLD_FONT_PTR = "res/bold.ttf";
+const char *REG_FONT_PTR  = "res/reg.ttf";
+const char *ICON_PTR      = "res/icon.png";
+
+const int FULL_SCREEN_WIDTH  = 1920;
+const int FULL_SCREEN_HEIGHT = 1080;
+
+const int TESTING_TIME_DELAY = 2000; // time in milliseconds
+
 class winXd
 {
 private:
-	int mode = 0;
+	int renderMode = 0;
 
+	// Special flag for test fps on server.
+	bool isTesting = false;
 	bool isAVX512supported = false;
 
 	bool isFullScreen = false;
@@ -44,6 +55,213 @@ private:
 	sf::Mouse mouse;
 	sf::RectangleShape upPanel;
 
+	void checkMouseEvent(mandelbrot *set, sf::Event& event, coordinates *coords)
+	{
+		if (event.type == sf::Event::MouseButtonPressed)
+		{
+			if (event.mouseButton.button == sf::Mouse::Left)
+			{
+				isLeftMousePressed = true;
+
+				mousePosition.x = mouse.getPosition().x;
+				mousePosition.y = mouse.getPosition().y;
+			}
+		}
+
+		if (event.type == sf::Event::MouseMoved)
+		{
+			if (isLeftMousePressed)
+			{
+				window.setPosition(sf::Vector2i((window.getPosition().x + (mouse.getPosition().x - mousePosition.x)),
+					window.getPosition().y + (mouse.getPosition().y - mousePosition.y)));
+
+				mousePosition.x = mouse.getPosition().x;
+				mousePosition.y = mouse.getPosition().y;
+			}
+		}
+
+		if (event.type == sf::Event::MouseButtonReleased)
+		{
+			if (event.mouseButton.button == sf::Mouse::Left && isLeftMousePressed)
+			{
+				isLeftMousePressed = false;
+			}
+		}
+
+
+		if (event.type == sf::Event::MouseWheelMoved)
+		{
+			coords->getCoordinates(window, set, WIDTH, HEIGHT);
+
+			set->scale *= 1 + set->MOUSE_WHEEL_SENSITIVITY * event.mouseWheel.delta;
+
+			set->x_shift -= (float)coords->rel_x_coef * event.mouseWheel.delta / set->scale;
+			set->y_shift -= (float)coords->rel_y_coef * event.mouseWheel.delta / set->scale;
+		}
+	}
+
+	void createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set)
+	{
+		TEMP_WIDTH  = WIDTH;
+		TEMP_HEIGHT = HEIGHT;
+
+		WIDTH  = 1920;
+		HEIGHT = 1080;
+
+		window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::Fullscreen);
+		window.setIcon(STD_ICON_SIZE, STD_ICON_SIZE, icon.getPixelsPtr());
+
+		set->pixels = (unsigned *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(unsigned));
+
+		setTexture.create(WIDTH, HEIGHT);
+		setRender.setPosition(0, 0);
+		setRender.setTextureRect(sf::IntRect(0, 0, WIDTH, HEIGHT));
+		setRender.setTexture(setTexture, false);
+		set->setModeString(reg, HEIGHT - 120, renderMode);
+
+		setRectSettings(
+			upPanel,
+			sf::Vector2f(WIDTH, 20),
+			sf::Color(1, 121, 216),
+			0, 0);
+	}
+
+	void createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set)
+	{
+		WIDTH  = TEMP_WIDTH;
+		HEIGHT = TEMP_HEIGHT;
+
+		window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::None);
+		window.setIcon(STD_ICON_SIZE, STD_ICON_SIZE, icon.getPixelsPtr());
+
+		set->pixels = (unsigned *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(unsigned));
+		
+		setTexture.create(WIDTH, HEIGHT);
+		setRender.setPosition(0, 0);
+		setRender.setTextureRect(sf::IntRect(0, 0, WIDTH, HEIGHT));
+		setRender.setTexture(setTexture, false);
+
+		setRectSettings(
+			upPanel,
+			sf::Vector2f(WIDTH, 20),
+			sf::Color(1, 121, 216),
+			0, 0);
+	}
+
+	void checkSetEvent(sf::RenderWindow& window, mandelbrot *set, sf::Event& event)
+	{
+		if (event.key.code == sf::Keyboard::B)
+		{
+			if (isTesting == true)
+			{
+				isTesting = false;
+				return;
+			}
+			if (isTesting == false)
+			{
+				isTesting = true;
+				return;
+			}
+		}
+
+		if (event.key.code == sf::Keyboard::T)
+		{
+			if (renderMode == 0)
+			{
+				renderMode = 1;
+				set->setModeString(reg, HEIGHT - 120, renderMode);
+
+				return;
+			}
+
+			if (renderMode == 1)
+			{
+				renderMode = 2;
+				set->setModeString(reg, HEIGHT - 120, renderMode);
+
+				return;
+			}
+
+			if (renderMode == 2)
+			{
+				if (isAVX512supported)
+				{
+					renderMode = 3;
+				}
+				else
+				{
+					renderMode = 0;
+				}
+
+				set->setModeString(reg, HEIGHT - 120, renderMode);
+
+				return;
+			}
+
+			if (renderMode == 3 && isAVX512supported)
+			{
+				renderMode = 0;
+				set->setModeString(reg, HEIGHT - 120, renderMode);
+			}
+		}
+
+		if (event.key.code == sf::Keyboard::Up)
+		{
+			set->MAX_CHECK++;
+		}
+
+		if (event.key.code == sf::Keyboard::Down)
+		{
+			if (set->MAX_CHECK == 0)
+			{
+				MessageBox(NULL,
+					"You can not make the number\n"
+					"of drawn levels negative)",
+
+					"you are trying to make a negative number of colors",
+
+					0);
+			}
+			else
+			{
+				set->MAX_CHECK--;
+			}
+		}
+	}
+
+	void checkWindowEvent(sf::RenderWindow& window, mandelbrot *set, sf::Event& event)
+	{
+		if (event.key.code == sf::Keyboard::Escape)
+		{
+			window.close();
+		}
+
+		if (event.key.code == sf::Keyboard::V)
+		{
+			SendNotifyMessageW(
+				window.getSystemHandle(),
+				WM_SYSCOMMAND,
+				SC_MINIMIZE,
+				0);
+		}
+
+		if (event.key.code == sf::Keyboard::O)
+		{
+			if (!isFullScreen)
+			{
+				createFullSreenWindow(window, set);
+				
+				isFullScreen = true;
+			}
+			else
+			{
+				createCommonSreenWindow(window, set);
+
+				isFullScreen = false;
+			}
+		}
+	}
+
 	// Window navigation.
 	void getBehavior(sf::RenderWindow& window, sf::Event& event, coordinates *coords, mandelbrot *set)
 	{
@@ -52,173 +270,15 @@ private:
 			// Exit the app
 			if (event.type == sf::Event::KeyPressed)
 			{
-				if (event.key.code == sf::Keyboard::Escape)
-				{
-					window.close();
-				}
+				// Escape, minimize, FullScreen events
+				checkWindowEvent(window, set, event);
 
-				if (event.key.code == sf::Keyboard::T)
-				{
-					if (mode == 0)
-					{
-						mode = 1;
-						set->setModeString(reg, HEIGHT - 120, mode);
-
-						break;
-					}
-
-					if (mode == 1)
-					{
-						mode = 2;
-						set->setModeString(reg, HEIGHT - 120, mode);
-
-						break;
-					}
-
-					if (mode == 2)
-					{
-						if (isAVX512supported)
-						{
-							mode = 3;
-						}
-						else
-						{
-							mode = 0;
-						}
-
-						set->setModeString(reg, HEIGHT - 120, mode);
-
-						break;
-					}
-					if (mode == 3 && isAVX512supported)
-					{
-						mode = 0;
-						set->setModeString(reg, HEIGHT - 120, mode);
-					}
-				}
-
-				if (event.key.code == sf::Keyboard::V)
-				{
-					SendNotifyMessageW(
-						window.getSystemHandle(),
-						WM_SYSCOMMAND,
-						SC_MINIMIZE,
-						0);
-				}
-
-				if (event.key.code == sf::Keyboard::O)
-				{
-					if (!isFullScreen)
-					{
-						TEMP_WIDTH  = WIDTH;
-						TEMP_HEIGHT = HEIGHT;
-
-						WIDTH  = 1920;
-						HEIGHT = 1080;
-
-						window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::Fullscreen);
-						window.setIcon(STD_ICON_SIZE, STD_ICON_SIZE, icon.getPixelsPtr());
-
-						set->pixels = (unsigned *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(unsigned));
-
-						setTexture.create(WIDTH, HEIGHT);
-						setRender.setPosition(0, 0);
-						setRender.setTextureRect(sf::IntRect(0, 0, WIDTH, HEIGHT));
-						setRender.setTexture(setTexture, false);
-						set->setModeString(reg, HEIGHT - 120, mode);
-
-						setRectSettings(
-							upPanel,
-							sf::Vector2f(WIDTH, 20),
-							sf::Color(1, 121, 216),
-							0, 0);
-						
-						isFullScreen = true;
-					}
-					else
-					{
-						WIDTH = TEMP_WIDTH;
-						HEIGHT = TEMP_HEIGHT;
-
-						window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::None);
-						window.setIcon(STD_ICON_SIZE, STD_ICON_SIZE, icon.getPixelsPtr());
-
-						set->pixels = (unsigned *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(unsigned));
-						
-						setTexture.create(WIDTH, HEIGHT);
-						setRender.setPosition(0, 0);
-						setRender.setTextureRect(sf::IntRect(0, 0, WIDTH, HEIGHT));
-						setRender.setTexture(setTexture, false);
-
-						setRectSettings(
-							upPanel,
-							sf::Vector2f(WIDTH, 20),
-							sf::Color(1, 121, 216),
-							0, 0);
-
-						isFullScreen = false;
-					}
-				}
-
-				if (event.key.code == sf::Keyboard::Up)
-				{
-					set->MAX_CHECK++;
-				}
-
-				if (event.key.code == sf::Keyboard::Down)
-				{
-					if (set->MAX_CHECK == 0)
-					{
-						MessageBox(NULL,
-							"You can not make the number\n"
-							"of drawn levels negative)",
-
-							"you are trying to make a negative number of colors",
-
-							0);
-					}
-					else
-					{
-						set->MAX_CHECK--;
-					}
-				}
+				// Changing render mode, detail level, test toggle
+				checkSetEvent(window, set, event);
 			}
 
 			// Dragging window.
-			if (event.type == sf::Event::MouseButtonPressed) {
-				if (event.mouseButton.button == sf::Mouse::Left) {
-					isLeftMousePressed = true;
-
-					mousePosition.x = mouse.getPosition().x;
-					mousePosition.y = mouse.getPosition().y;
-				}
-			}
-
-			if (event.type == sf::Event::MouseMoved) {
-				if (isLeftMousePressed) {
-					window.setPosition(sf::Vector2i((window.getPosition().x + (mouse.getPosition().x - mousePosition.x)),
-						window.getPosition().y + (mouse.getPosition().y - mousePosition.y)));
-
-					mousePosition.x = mouse.getPosition().x;
-					mousePosition.y = mouse.getPosition().y;
-				}
-			}
-
-			if (event.type == sf::Event::MouseButtonReleased) {
-				if (event.mouseButton.button == sf::Mouse::Left && isLeftMousePressed) {
-					isLeftMousePressed = false;
-				}
-			}
-
-
-			if (event.type == sf::Event::MouseWheelMoved) {
-				coords->getCoordinates(window, set, WIDTH, HEIGHT);
-
-				set->scale *= 1 + set->MOUSE_WHEEL_SENSITIVITY * event.mouseWheel.delta;
-
-				set->x_shift -= (float)coords->rel_x_coef * event.mouseWheel.delta / set->scale;
-				set->y_shift -= (float)coords->rel_y_coef * event.mouseWheel.delta / set->scale;
-			}
+			checkMouseEvent(set, event, coords);
 		}
 	}
 
@@ -249,13 +309,9 @@ public:
 				"AVX512 not supported...",
 				0);
 		}
-		else
-		{
-			isAVX512supported = true;
-		}
 
 		// Try to load data.
-		if (!bold.loadFromFile("res/bold.ttf"))
+		if (!bold.loadFromFile(BOLD_FONT_PTR))
 		{
 			MessageBox(NULL,
 				"I think you misplaced the fonts folder,\n"
@@ -268,7 +324,7 @@ public:
 				0);
 		}
 
-		if (!reg.loadFromFile("res/reg.ttf"))
+		if (!reg.loadFromFile(REG_FONT_PTR))
 		{
 			MessageBox(NULL,
 				"I think you misplaced the fonts folder,\n"
@@ -301,7 +357,7 @@ public:
 		strcpy(guideString,
 			"Use the \'up arrow\', \'down arrow\' to adjust the precision of the set.\n"
 			"Use your mouse to navigate through the set\n"
-			"Also you can use \'T\' to change mode of rendering");
+			"Also you can use \'T\' to change renderMode of rendering");
 
 		sf::Text guide(guideString, reg, 14);
 		guide.setFillColor(sf::Color(255, 255, 255, 150));
@@ -312,7 +368,7 @@ public:
 			name,
 			sf::Style::None);
 
-		if (!icon.loadFromFile("res/icon.png"))
+		if (!icon.loadFromFile(ICON_PTR))
 		{
 			MessageBox(NULL,
 				"most likely the matter is in the location\n"
@@ -330,9 +386,6 @@ public:
 		setTexture.create(WIDTH, HEIGHT);
 
 		setRender.setPosition(0, 0);
-		setRender.setTextureRect(sf::IntRect(0, 0, WIDTH, HEIGHT));
-		setRender.setTexture(setTexture, false);
-
 		coordinates coords;
 
 		mandelbrot set;
@@ -344,54 +397,96 @@ public:
 		set.fpsString.setPosition(label.getLocalBounds().width + 2 * MARGIN, 1);
 		set.renew(set.fpsString);
 
-		set.setModeString(reg, HEIGHT - 120, mode);
+		set.setModeString(reg, HEIGHT - 120, renderMode);
+
+		time_t timeSpend = 0;
+		time_t startTime = clock();
+		isTesting = false;
+
+		sf::Text testString("TESTING", bold, 24);
+		testString.setPosition(30, 30);
 
 		while (window.isOpen())
 		{
 			sf::Event event;
 			getBehavior(window, event, &coords, &set);
 
-			// Render different parts of the window.
 			window.clear(sf::Color::Transparent);
 
 			// Update set.
-			if (mode == 0)
+			if (renderMode == 0)
 			{
 				renderSetNoOptimization(WIDTH, HEIGHT, &set);
 			}
-			if (mode == 1)
+			if (renderMode == 1)
 			{
-				renderSetSSE128(WIDTH, HEIGHT, &set);
+				renderSetSSE(WIDTH, HEIGHT, &set);
 			}
-			if (mode == 2)
+			if (renderMode == 2)
 			{
-				renderSetAVX256(WIDTH, HEIGHT, &set);
+				renderSetAVX(WIDTH, HEIGHT, &set);
 			}
-			if (mode == 3 && isAVX512supported)
+			if (renderMode == 3 && isAVX512supported)
 			{
-				renderSetAVX512(WIDTH, HEIGHT, &set);
+				renderSetAVX512f(WIDTH, HEIGHT, &set);
 			}
 
-			setTexture.update((uint8_t *)set.pixels);
-			window.draw(setRender);
+			if (isTesting)
+			{
+				timeSpend = clock() - startTime;
+				set.renew(set.fpsString);
+				
+				if (timeSpend > TESTING_TIME_DELAY)
+				{
+					printf("clock\n");
+					startTime = clock();
+					
+					setTexture.update((uint8_t *)set.pixels);
+					setRender.setTexture(setTexture, false);
 
-			// Update fps.
-			set.renew(set.fpsString);
+					window.draw(setRender);
 
-			window.draw(upPanel);
-			window.draw(label);
-			window.draw(info);
-			window.draw(guide);
+					window.draw(upPanel);
+					window.draw(label);
+					window.draw(info);
+					window.draw(guide);
 
-			set.setCheckText(bold, HEIGHT - 100);
-			info.setPosition(WIDTH - info.getLocalBounds().width - MARGIN, 1);
-			guide.setPosition(MARGIN, HEIGHT - guide.getLocalBounds().height - MARGIN);
+					set.setCheckText(bold, HEIGHT - 100);
+					info.setPosition(WIDTH - info.getLocalBounds().width - MARGIN, 1);
+					guide.setPosition(MARGIN, HEIGHT - guide.getLocalBounds().height - MARGIN);
 
-			window.draw(set.checkInfo);
-			window.draw(set.fpsString);
-			window.draw(set.modeString);
+					window.draw(set.checkInfo);
+					window.draw(set.fpsString);
+					window.draw(set.modeString);
 
-			window.display();
+					window.draw(testString);
+
+					window.display();
+				}
+			}
+			else
+			{
+				setTexture.update((uint8_t *)set.pixels);
+				setRender.setTexture(setTexture, false);
+				window.draw(setRender);
+
+				set.renew(set.fpsString);
+
+				window.draw(upPanel);
+				window.draw(label);
+				window.draw(info);
+				window.draw(guide);
+
+				set.setCheckText(bold, HEIGHT - 100);
+				info.setPosition(WIDTH - info.getLocalBounds().width - MARGIN, 1);
+				guide.setPosition(MARGIN, HEIGHT - guide.getLocalBounds().height - MARGIN);
+
+				window.draw(set.checkInfo);
+				window.draw(set.fpsString);
+				window.draw(set.modeString);
+
+				window.display();
+			}
 		}
 	}
 };

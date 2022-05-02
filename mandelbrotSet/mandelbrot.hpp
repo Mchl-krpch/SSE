@@ -65,7 +65,7 @@ typedef struct
 		if (mode == 2)
 		{
 			modeString.setFillColor(sf::Color(64, 228, 130, 200));
-			strcat(string, "avx256");
+			strcat(string, "avx");
 		}
 
 		if (mode == 3)
@@ -139,11 +139,10 @@ typedef struct
 		position.x = sf::Mouse::getPosition().x - window.getPosition().x - (width / 2);
 		position.y = sf::Mouse::getPosition().y - window.getPosition().y - (height / 2);
 
-		// printf("%f %f\n", position.x, position.y);
-
 		rel_x_coef = ((float)(-1 * (float)position.x) / set->mouseMovementSensivity);
 		rel_y_coef = ((float)(-1 * (float)position.y) / set->mouseMovementSensivity);
 	}
+
 } coordinates;
 
 bool IsAVX512InTouch()
@@ -157,14 +156,14 @@ bool IsAVX512InTouch()
 	{
 		__cpuidex(cpuInfo, 7, 0);
 
-		// Check avx512!
+		// Check avx512
 		return ((cpuInfo[1]) >> 16) & 0x01;
 	}
 
 	return false;
 }
 
-void renderSetAVX512(const int windowWidth, const int windowHeight, mandelbrot *set)
+void renderSetAVX512f(const int windowWidth, const int windowHeight, mandelbrot *set)
 {
 	// FOR AVX 512
 	const uint16_t FULL_COLORED512 = 0xFFFF;
@@ -177,8 +176,8 @@ void renderSetAVX512(const int windowWidth, const int windowHeight, mandelbrot *
 	{
 		float Im_num = ((float)y / windowWidth - 0.5 * windowHeight / windowWidth) / set->scale + set->y_shift;
 
-		for (int x = 0; x < windowWidth; x += 16) {
-
+		for (int x = 0; x < windowWidth; x += 16)
+		{
 			__m512 Re = _mm512_set_ps(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 
 			Re = _mm512_add_ps(Re, _mm512_set1_ps((float)x    ));
@@ -215,8 +214,10 @@ void renderSetAVX512(const int windowWidth, const int windowHeight, mandelbrot *
 
 				cmp = (~colored) & cmp;
 
-				for (int i_cmp = 0; i_cmp < 16; i_cmp++) {
-					if (1 & (cmp >> (i_cmp))) {
+				for (int i_cmp = 0; i_cmp < 16; i_cmp++)
+				{
+					if (1 & (cmp >> (i_cmp)))
+					{
 						set->pixels[pixels_pos + ((int64_t)15 - i_cmp)] =
 							(uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
 					}
@@ -234,7 +235,7 @@ void renderSetAVX512(const int windowWidth, const int windowHeight, mandelbrot *
 }
 
 
-void renderSetAVX256(const int windowWidth, const int windowHeight, mandelbrot *set)
+void renderSetAVX(const int windowWidth, const int windowHeight, mandelbrot *set)
 {
 	int pixels_pos = 0;
 
@@ -267,8 +268,8 @@ void renderSetAVX256(const int windowWidth, const int windowHeight, mandelbrot *
 			__m256 Re_2 = _mm256_mul_ps(Re, Re);
 			__m256 Im_2 = _mm256_mul_ps(Im, Im);
 
-			for (int n = 0; n < set->MAX_CHECK && !_mm256_testc_ps(colored, FULL_COLORED); n++) {
-
+			for (int n = 0; n < set->MAX_CHECK && !_mm256_testc_ps(colored, FULL_COLORED); n++)
+			{
 				Im = _mm256_fmadd_ps(MUL_2, _mm256_mul_ps(Re, Im), Im0);
 				Re = _mm256_add_ps(_mm256_sub_ps(Re_2, Im_2), Re0);
 
@@ -279,8 +280,10 @@ void renderSetAVX256(const int windowWidth, const int windowHeight, mandelbrot *
 
 				cmp = _mm256_andnot_ps(colored, cmp);
 
-				for (int i_cmp = 0; i_cmp < 8; i_cmp++) {
-					if (*((int *)&cmp + i_cmp)) {
+				for (int i_cmp = 0; i_cmp < 8; i_cmp++)
+				{
+					if (*((int *)&cmp + i_cmp))
+					{
 						set->pixels[pixels_pos + ((int64_t)7 - i_cmp)] =
 							(uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
 					}
@@ -297,7 +300,7 @@ void renderSetAVX256(const int windowWidth, const int windowHeight, mandelbrot *
 	return;
 }
 
-void renderSetSSE128(const int windowWidth, const int windowHeight, mandelbrot *set)
+void renderSetSSE(const int windowWidth, const int windowHeight, mandelbrot *set)
 {
 	int pixels_pos = 0;
 
@@ -330,8 +333,8 @@ void renderSetSSE128(const int windowWidth, const int windowHeight, mandelbrot *
 			__m128 Re_2 = _mm_mul_ps(Re, Re);
 			__m128 Im_2 = _mm_mul_ps(Im, Im);
 
-			for (int n = 0; n < set->MAX_CHECK && !_mm_testc_ps(colored, FULL_COLORED_128); n++) {
-
+			for (int n = 0; n < set->MAX_CHECK && !_mm_testc_ps(colored, FULL_COLORED_128); n++)
+			{
 				Im = _mm_fmadd_ps(MUL, _mm_mul_ps(Re, Im), Im0);
 				Re = _mm_add_ps(_mm_sub_ps(Re_2, Im_2), Re0);
 
@@ -384,25 +387,17 @@ void renderSetNoOptimization(const int windowWidth, const int windowHeight, mand
 			float Re_2 = Re * Re;
 			float Im_2 = Im * Im;
 
-			for (int n = 0; n < set->MAX_CHECK && ((colored & NORM_FULL_COLORED) == 0); n++) {
-
-				// Im = _mm256_fmadd_ps(MUL_2, _mm256_mul_ps(Re, Im), Im0);
+			for (int n = 0; n < set->MAX_CHECK && ((colored & NORM_FULL_COLORED) == 0); n++)
+			{
 				Im = 2.0f * Re * Im + Im0;
 
-				// Re = _mm256_add_ps(_mm256_sub_ps(Re_2, Im_2), Re0);
 				Re = Re_2 - Im_2 + Re0;
 
-				// Re_2 = _mm256_mul_ps(Re, Re);
 				Re_2 = Re * Re;
 
-				// Im_2 = _mm256_mul_ps(Im, Im);
 				Im_2 = Im * Im;
-
-				// __m256 cmp = _mm256_cmp_ps(_mm256_add_ps(Re_2, Im_2), R_NEED, _CMP_GT_OQ);
 				bool cmp = (Re_2 + Im_2) > 100;
 
-
-				// cmp = _mm256_andnot_ps(colored, cmp);
 				cmp = ~(colored >= 1) & cmp;
 
 				if (cmp)
@@ -410,7 +405,6 @@ void renderSetNoOptimization(const int windowWidth, const int windowHeight, mand
 					set->pixels[y * windowWidth + x] = (uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
 				}
 
-				// colored = _mm256_or_ps(colored, cmp);
 				colored |= cmp;
 			}
 
