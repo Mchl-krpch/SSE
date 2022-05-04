@@ -30,7 +30,7 @@ CONSOLE =
 	BUILD_LIB   = build
 
 # Files to compile.
-TARGET     = executor
+TARGET     = benchmark
 TARGET_RES = my
 
 # Output file name.
@@ -48,13 +48,13 @@ QUITE += @
 all: compile execute
 endif
 
-execute: $(BUILD_LIB)/$(EXECUTABLE)
-	$(QUITE)$(BUILD_LIB)/$(EXECUTABLE)
+execute: $(EXECUTABLE)
+	$(QUITE)./$(EXECUTABLE)
 
 compile: $(TARGET).cpp
 	@clear
-	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp -o $(BUILD_LIB)/$(TARGET).o
-	$(QUITE) $(CC) $(CONSOLE) $(BUILD_LIB)/$(TARGET).o $(LIBS) -o $(BUILD_LIB)/$(EXECUTABLE)
+	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp -o $(TARGET).o
+	$(QUITE) $(CC) $(CONSOLE) $(TARGET).o $(LIBS) -o $(EXECUTABLE)
 
 clean:
 	del $(BUILD_LIB)/$(EXECUTABLE).exe $(BUILD_LIB)/*.o

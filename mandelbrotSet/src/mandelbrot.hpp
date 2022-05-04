@@ -1,6 +1,8 @@
 #ifndef _mandelbrot_
 #define _mandelbrot_
 
+#include <cpuid.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -146,6 +148,15 @@ typedef struct
 
 } coordinates;
 
+// Взято из кода GCC т.к на некоторых версиях нет __cpuidex
+static __inline void
+__MY_ORIGINAL_cpuidex (int __cpuid_info[4], int __leaf, int __subleaf)
+{
+  __asm__ __volatile__ ("cpuid\n\t"							\
+			: "=a" (__cpuid_info[0]), "=b" (__cpuid_info[1]), "=c" (__cpuid_info[2]), "=d" (__cpuid_info[3])		\
+			: "0" (__leaf), "2" (__subleaf));
+}
+
 #ifdef _WIN32
 bool IsAVX512InTouch()
 {
@@ -156,7 +167,7 @@ bool IsAVX512InTouch()
 	int numLeaves = cpuInfo[0];
 	if (numLeaves >= 7)
 	{
-		__cpuidex(cpuInfo, 7, 0);
+		__cpuidex(cpuInfo, 0, 0);
 
 		// Check avx512
 		return ((cpuInfo[1]) >> 16) & 0x01;
@@ -167,7 +178,20 @@ bool IsAVX512InTouch()
 #else
 bool IsAVX512InTouch()
 {
-	return true;
+	// if num liaves < 7, then avx512 is not availavle.
+	int cpuInfo[4] = {};
+	__MY_ORIGINAL_cpuidex(cpuInfo, 0, 0);
+
+	int numLeaves = __get_cpuid_max(0, NULL);
+	if (numLeaves >= 7)
+	{
+		__MY_ORIGINAL_cpuidex(cpuInfo, 7, 0);
+
+		// Check avx512
+		return ((cpuInfo[1]) >> 16) & 0x01;
+	}
+
+	return false;
 }
 #endif
 

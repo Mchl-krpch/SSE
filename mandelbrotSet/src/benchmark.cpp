@@ -7,7 +7,6 @@
 
 const int WIDTH  = 1920;
 const int HEIGHT = 1080;
-
 const int ATTEMPTS = 20;
 
 int main()
@@ -40,9 +39,16 @@ int main()
 	}
 	printf("%-25s%f\n", "TIME AVX:",             ((float)clock() / CLOCKS_PER_SEC - start) / ATTEMPTS);
 
-	// start = clock();
-	// renderSetAVX512f(WIDTH, HEIGHT, &set);
-	// printf("TIME AVX512: %ld\n", clock() - start);
+	if (IsAVX512InTouch())
+	{	
+		start = clock();
+		renderSetAVX512f(WIDTH, HEIGHT, &set);
+		printf("TIME AVX512: %ld\n", clock() - start);
+	}
+	else
+	{
+		printf("AVX512 is not supported\n");
+	}
 
 	return 0;
 }
