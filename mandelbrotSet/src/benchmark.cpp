@@ -43,7 +43,7 @@ int main()
 	{	
 		start = clock();
 		renderSetAVX512f(WIDTH, HEIGHT, &set);
-		printf("TIME AVX512: %ld\n", clock() - start);
+		printf("TIME AVX512: %f\n", ((float)clock() / CLOCKS_PER_SEC - start) / ATTEMPTS);
 	}
 	else
 	{
