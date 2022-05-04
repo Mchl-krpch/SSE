@@ -1,6 +1,6 @@
 ## SSE optimizations in render
 
-[![mandelbrot](readmeRes/mandelbrot-label.svg)](releases/tag/merge) ![merge](readmeRes/merge-label.svg)</br>
+[![mandelbrot](readmeRes/mandelbrot-label.svg)](https://github.com/Mchl-krpch/SSE/releases/tag/mandelbrot) [![merge](readmeRes/merge-label.svg)](https://github.com/Mchl-krpch/SSE/releases/tag/merge)</br>
 
 This repository contains a program for drawing the Mandelbrot set and Combining two pictures into one.
 
