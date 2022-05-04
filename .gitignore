@@ -1,8 +1,6 @@
 # Debug libs
 mandel2
 mandelbrotSet/old
-mandelbrotSet/SFML-2.5.1
-test/
 
 # Linker output
 *.ilk
@@ -17,13 +15,6 @@ test/
 *.so
 *.so.*
 *.dylib
-
-# Executables
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
 
 # Kernel Module Compile Results
 *.mod*
