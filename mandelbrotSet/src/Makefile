@@ -28,11 +28,11 @@ CONSOLE =
 # Folders with library on computer
 	INCLUDE_PTR = "SFML-2.5.1\include"
 	LIBRARY_PTR = "SFML-2.5.1\build\lib"
-	BUILD_LIB   = build
+	BUILD_LIB   = ..\\build
 
 # Files to compile.
 TARGET     = executor
-TARGET_RES = my
+TARGET_RES = res/mandelbrotInfo
 
 # Output file name.
 EXECUTABLE = mandelbrotSet

@@ -1,0 +1,32 @@
+src/SFML/System/CMakeFiles/sfml-system.dir/MemoryInputStream.cpp.obj: \
+ C:\Users\Xiaomi\Documents\C\SSE\mandelbrotSet\SFML-2.5.1\src\SFML\System\MemoryInputStream.cpp \
+ C:/Users/Xiaomi/Documents/C/SSE/mandelbrotSet/SFML-2.5.1/include/SFML/System/MemoryInputStream.hpp \
+ C:/Users/Xiaomi/Documents/C/SSE/mandelbrotSet/SFML-2.5.1/include/SFML/Config.hpp \
+ C:/Users/Xiaomi/Documents/C/SSE/mandelbrotSet/SFML-2.5.1/include/SFML/System/InputStream.hpp \
+ C:/Users/Xiaomi/Documents/C/SSE/mandelbrotSet/SFML-2.5.1/include/SFML/System/Export.hpp \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\cstdlib \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\x86_64-w64-mingw32\bits\c++config.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\x86_64-w64-mingw32\bits\os_defines.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\x86_64-w64-mingw32\bits\cpu_defines.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\pstl\pstl_config.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\stdlib.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\corecrt.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\_mingw.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\_mingw_mac.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\_mingw_secapi.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\vadefs.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\sdks/_mingw_ddk.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\corecrt_wstdlib.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\lib\gcc\x86_64-w64-mingw32\11.2.0\include-fixed\limits.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\lib\gcc\x86_64-w64-mingw32\11.2.0\include-fixed\syslimits.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\limits.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\crtdefs.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\sec_api\stdlib_s.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\stdlib.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\malloc.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\lib\gcc\x86_64-w64-mingw32\11.2.0\include\mm_malloc.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\errno.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\bits\std_abs.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\include\c++\11.2.0\cstring \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\string.h \
+ c:\users\xiaomi\documents\mingw-18\mingw\x86_64-w64-mingw32\include\sec_api\string_s.h
