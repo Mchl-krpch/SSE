@@ -4,6 +4,5 @@
 
 This repository contains a program for drawing the Mandelbrot set and Combining two pictures into one.
 
-The learning goal, however, was to study the functions sse, avx.</br>
-In the code files you can [find](mandelbrotSet/src/benchmark.cpp) a comparison of these functions.
+The learning goal, however, was to study the functions sse, avx. In the code files you can [find](mandelbrotSet/src/benchmark.cpp) a comparison of these functions.
 
