@@ -26,7 +26,7 @@ AVX512 turned out to be lightning fast.
 
 ![test results](readmeRes/victory.png)
 
-In order to test the results of AVX512, a server was rented FOR A WHOLE $0.1!
+In order to test the results of AVX512, a server was rented FOR A WHOLE 0.065$ [04.05.2022]!
 thanks to this machine, it was possible to fix an increase of as much as
 2 times compared to AVX256.
 
