@@ -146,7 +146,7 @@ typedef struct
 
 } coordinates;
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 bool IsAVX512InTouch()
 {
 	// if num liaves < 7, then avx512 is not availavle.

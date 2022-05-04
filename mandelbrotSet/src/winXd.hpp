@@ -306,7 +306,6 @@ public:
 	{
 
 		bool AVX512_AVAILABLE = IsAVX512InTouch();
-		isAVX512supported = true;
 		if (!AVX512_AVAILABLE)
 		{
 			// 4й аргумент - стиль иконки, кнопки
@@ -314,7 +313,13 @@ public:
 			MessageBox(NULL,
 				"unfortunately, there's nothing to be done, the fact is that some processors "
 				"do not support avx512. In this case, two exhaustive options can be considered."
-				"The first is to rent a server, the second is to buy a new computer.",
+				"The first is to rent a server, the second is to buy a new computer.\n\n"
+				"THERE IS REALLY NO REASON TO WORRY,\n"
+				"yes, your computer do not support the fastest avx512 technology,\n"
+				"but 3 standard modes will work for you:\n"
+				"    -without optimizations\n"
+				"    -sse optimization\n"
+				"    -avx256 optimization",
 
 				"AVX512 not supported...",
 				0);
@@ -324,6 +329,14 @@ public:
 				"The first is to rent a server, the second is to buy a new computer.");
 			#endif
 		}
+		else
+		{
+			isAVX512supported = true;
+		}
+
+		#ifndef _WIN32
+		isAVX512supported = true;
+		#endif
 
 		// Try to load data.
 		if (!bold.loadFromFile(BOLD_FONT_PTR))
