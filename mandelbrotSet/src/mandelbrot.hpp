@@ -167,7 +167,7 @@ bool IsAVX512InTouch()
 	int numLeaves = cpuInfo[0];
 	if (numLeaves >= 7)
 	{
-		__cpuidex(cpuInfo, 0, 0);
+		__cpuidex(cpuInfo, 7, 0);
 
 		// Check avx512
 		return ((cpuInfo[1]) >> 16) & 0x01;

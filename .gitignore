@@ -1,7 +1,7 @@
 # Debug libs
 mandel2
 mandelbrotSet/old
-imgComposing
+imgComposing/
 
 # Linker output
 *.ilk

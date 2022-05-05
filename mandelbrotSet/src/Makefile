@@ -48,7 +48,7 @@ execute: $(BUILD_LIB)$(EXECUTABLE).exe
 	$(QUITE)$(BUILD_LIB)$(EXECUTABLE)
 
 compile: $(TARGET).cpp
-	@cls
+	$(QUITE) cls
 	$(QUITE) $(RES_CC) $(TARGET_RES).rc -O coff \
 		-o $(TARGET_RES).res
 	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp \

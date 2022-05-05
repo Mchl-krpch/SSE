@@ -41,19 +41,16 @@ int main()
 
 	if (IsAVX512InTouch())
 	{	
-<<<<<<< HEAD
 		start = clock();
 		renderSetAVX512f(WIDTH, HEIGHT, &set);
 		printf("TIME AVX512: %f\n", ((float)clock() / CLOCKS_PER_SEC - start) / ATTEMPTS);
-=======
+
 		start = clock() / CLOCKS_PER_SEC;
 		for (int index = 0; index < ATTEMPTS; index++)
 		{
 			renderSetAVX512f(WIDTH, HEIGHT, &set);
 		}
 		printf("%-25s%f\n", "TIME AVX512:",             ((float)clock() / CLOCKS_PER_SEC - start) / ATTEMPTS);
-
->>>>>>> fd9dce16a8e84812c88833555e763680195512bf
 	}
 	else
 	{
