@@ -3,19 +3,9 @@ mandel2
 mandelbrotSet/old
 imgComposing/
 
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Shared objects (inc. Windows DLLs)
-*.so
-*.so.*
-*.dylib
+# object files
+*.o
+*.obj
 
 # Kernel Module Compile Results
 *.mod*
