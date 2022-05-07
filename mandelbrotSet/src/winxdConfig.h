@@ -139,8 +139,8 @@ private:// Constants.
 
 private:// Functions.
 
-	void createFullSreenWindow   (sf::RenderWindow& window, mandelbrot *set);
-	void createCommonSreenWindow (sf::RenderWindow& window, mandelbrot *set);
+	void createFullSreenWindow   (sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide);
+	void createCommonSreenWindow (sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide);
 
 	void checkSetEvent    (sf::RenderWindow& window, mandelbrot *set, sf::Event& event);
 	void checkWindowEvent (sf::RenderWindow& window, mandelbrot *set, sf::Event& event);
@@ -172,161 +172,13 @@ private:// Functions.
 	void setControlLabel(char *guideString, sf::Text& guide);
 	void setFpsText(sf::Text& fpsString);
 
+	void updateMandelbrotWindow(sf::RenderWindow& window,
+		sf::Texture& setTexture,sf::Sprite& setRender,
+		sf::RectangleShape& upPanel, sf::Text& label, sf::Text& info, sf::Text& guide,
+		mandelbrot *set);
+
 public:
-	void create(const char *name)
-	{
-		 // Check if AVX512 can be used.
-		if (!IsAVX512InTouch())
-		{
-			crossPlatformMessage("AVX512 not supported...", MSG_AVX512_NOT_SUPPORTED);
-		}
-		else
-		{
-			isAVX512supported = true;
-		}
-
-		 // Try to load fonts.
-		if (!bold.loadFromFile(BOLD_FONT_PTR)){
-			crossPlatformMessage("Application failed to load bold font", MSG_FAILED_TO_LOAD_BOLD_FONT);
-		}
-
-		if (!reg.loadFromFile(REG_FONT_PTR))
-		{
-			crossPlatformMessage("Application failed to load regular font", MSG_FAILED_TO_LOAD_REGULAR_FONT);
-		}
-
-		 // Set settings to upper panel and UX instruction.
-		setUpperPanel   (label, info);
-		setControlLabel (guideString, guide);
-
-		window.create(sf::VideoMode(WIDTH, HEIGHT),	name, sf::Style::None);
-
-		if (!icon.loadFromFile(ICON_PTR))
-		{
-			crossPlatformMessage("Failed to load icon", MSG_FAILED_TO_LOAD_ICON);
-		}
-
-		window.setIcon(ICON_SIZE, ICON_SIZE, icon.getPixelsPtr());
-
-		setTexture.create(WIDTH, HEIGHT);
-
-		setRender.setPosition(0, 20);
-		coordinates coords;
-
-		mandelbrot set;
-		set.pixels = (int *)calloc(WIDTH * HEIGHT, sizeof(int));
-		set.setCheckText(bold, HEIGHT - 100);
-
-		setFpsText(set.fpsString);
-		set.setModeString(reg, HEIGHT - 120, renderMode);
-
-// here >
-		time_t timeSpend = 0;
-		time_t startTime = clock() / CLOCKS_PER_SEC;
-		isTesting = false;
-
-		sf::Text testString("TESTING", bold, BIG_FONT_SIZE);
-		testString.setPosition(30, 30);
-
-		while (window.isOpen())
-		{
-			sf::Event event;
-			getBehavior(window, event, &coords, &set);
-
-			window.clear(sf::Color::Transparent);
-
-			// Update set.
-			switch (renderMode)
-			{
-				case (RenderMode::NoOptimizationMode):
-				{
-					renderSetNoOptimization(WIDTH, HEIGHT, &set);
-					break;
-				}
-				case (RenderMode::OptimizationSSE):
-				{
-					renderSetSSE(WIDTH, HEIGHT, &set);
-					break;
-				}
-				case (RenderMode::OptimizationAVX256):
-				{
-					renderSetAVX(WIDTH, HEIGHT, &set);
-					break;
-				}
-				case (RenderMode::OptimizationAVX512):
-				{
-					if (isAVX512supported)
-					{
-						renderSetAVX512f(WIDTH, HEIGHT, &set);
-					}
-					break;
-				}
-				default:
-				{
-					renderSetNoOptimization(WIDTH, HEIGHT, &set);
-					break;
-				}
-			}
-
-			if (isTesting)
-			{
-				timeSpend = clock() / CLOCKS_PER_SEC - startTime;
-				printf("clock %ld\n", timeSpend);
-				
-				set.renew(set.fpsString);
-
-				if (timeSpend > 3)
-				{
-					startTime = clock() / CLOCKS_PER_SEC;
-					
-					setTexture.update((uint8_t *)set.pixels);
-					setRender.setTexture(setTexture, false);
-
-					window.draw(setRender);
-
-					window.draw(upPanel);
-					window.draw(label);
-					window.draw(info);
-					window.draw(guide);
-
-					set.setCheckText(bold, HEIGHT - 100);
-					info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
-					guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
-
-					window.draw(set.checkInfo);
-					window.draw(set.fpsString);
-					window.draw(set.modeString);
-
-					window.draw(testString);
-
-					window.display();
-				}
-			}
-			else
-			{
-				setTexture.update((uint8_t *)set.pixels);
-				setRender.setTexture(setTexture, false);
-				window.draw(setRender);
-
-				set.renew(set.fpsString);
-
-				window.draw(upPanel);
-				window.draw(label);
-				window.draw(info);
-				window.draw(guide);
-
-				set.setCheckText(bold, HEIGHT - 100);
-				info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
-				guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
-
-				window.draw(set.checkInfo);
-				window.draw(set.fpsString);
-				window.draw(set.modeString);
-
-				window.display();
-			}
-		}
-	}
+	void create(const char *name);
 };
 
 #endif

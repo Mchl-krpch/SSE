@@ -22,15 +22,14 @@ void crossPlatformMessage(const char *title, const char *msg)
 	#endif
 }
 
-// Взято из кода GCC т.к на некоторых версиях нет __cpuidex
+// Taken from GCC code as some versions don't have __cpuidex
 static __inline void
 __MY_ORIGINAL_cpuidex (int __cpuid_info[4], int __leaf, int __subleaf)
 {
-	__asm__ __volatile__ ("cpuid\n\t"							\
-			: "=a" (__cpuid_info[0]), "=b" (__cpuid_info[1]), "=c" (__cpuid_info[2]), "=d" (__cpuid_info[3])		\
-			: "0" (__leaf), "2" (__subleaf));
+	__asm__ __volatile__ ("cpuid\n\t"							                                         \
+		: "=a" (__cpuid_info[0]), "=b" (__cpuid_info[1]), "=c" (__cpuid_info[2]), "=d" (__cpuid_info[3]) \
+		: "0" (__leaf), "2" (__subleaf));
 }
-
 
 #ifdef _WIN32
 bool IsAVX512InTouch()
@@ -69,6 +68,139 @@ bool IsAVX512InTouch()
 	return false;
 }
 #endif
+
+void winXd::create(const char *name)
+{
+	 // Check if AVX512 can be used.
+	if (!IsAVX512InTouch())
+	{
+		crossPlatformMessage("AVX512 not supported on you PC", MSG_AVX512_NOT_SUPPORTED);
+	}
+	else
+	{
+		isAVX512supported = true;
+	}
+
+	 // Try to load fonts.
+	if (!bold.loadFromFile(BOLD_FONT_PTR)){
+		crossPlatformMessage("Application failed to load bold font", MSG_FAILED_TO_LOAD_BOLD_FONT);
+	}
+
+	if (!reg.loadFromFile(REG_FONT_PTR))
+	{
+		crossPlatformMessage("Application failed to load regular font", MSG_FAILED_TO_LOAD_REGULAR_FONT);
+	}
+
+	 // Set settings to upper panel and UX instruction.
+	setUpperPanel   (label, info);
+	setControlLabel (guideString, guide);
+
+	window.create(sf::VideoMode(WIDTH, HEIGHT),	name, sf::Style::None);
+
+	if (!icon.loadFromFile(ICON_PTR))
+	{
+		crossPlatformMessage("Failed to load icon", MSG_FAILED_TO_LOAD_ICON);
+	}
+
+	window.setIcon(ICON_SIZE, ICON_SIZE, icon.getPixelsPtr());
+
+	setTexture.create(WIDTH, HEIGHT);
+
+	setRender.setPosition(0, 20);
+	coordinates coords;
+
+	mandelbrot set;
+	set.pixels = (int *)calloc(WIDTH * HEIGHT, sizeof(int));
+	set.setCheckText(bold, HEIGHT - 100);
+
+	setFpsText(set.fpsString);
+	set.setModeString(reg, HEIGHT - 120, renderMode);
+
+	time_t timeSpend = 0;
+	time_t startTime = clock() / CLOCKS_PER_SEC;
+	isTesting = false;
+
+	sf::Text testString("TESTING", bold, BIG_FONT_SIZE);
+	testString.setPosition(30, 30);
+	
+	while (window.isOpen())
+	{
+		sf::Event event;
+		getBehavior(window, event, &coords, &set);
+
+		window.clear(sf::Color::Transparent);
+
+		 // Update set with one of render-function [depends on mode].
+		switch (renderMode)
+		{
+			case (RenderMode::NoOptimizationMode):
+			{
+				renderSetNoOptimization(WIDTH, HEIGHT, &set);
+				break;
+			}
+			case (RenderMode::OptimizationSSE):
+			{
+				renderSetSSE(WIDTH, HEIGHT, &set);
+				break;
+			}
+			case (RenderMode::OptimizationAVX256):
+			{
+				renderSetAVX(WIDTH, HEIGHT, &set);
+				break;
+			}
+			case (RenderMode::OptimizationAVX512):
+			{
+				if (isAVX512supported)
+				{
+					renderSetAVX512f(WIDTH, HEIGHT, &set);
+				}
+				break;
+			}
+			default:
+			{
+				renderSetNoOptimization(WIDTH, HEIGHT, &set);
+				break;
+			}
+		}
+
+		 /*  SWITCH MODE
+		  If the 'Testing' mode is enabled, the window rendering will
+		  be slow. Between frames will pass 'TESTING_TIME_DELAY'-ms */
+
+		if (isTesting)
+		{
+			timeSpend = clock() / CLOCKS_PER_SEC - startTime;
+			set.renew(set.fpsString);
+
+			 // Check timeSpend
+			if (timeSpend > 3)
+			{
+				startTime = clock() / CLOCKS_PER_SEC;
+				
+				 // Main drawing functon
+				updateMandelbrotWindow(
+					window,
+					setTexture, setRender,
+					upPanel, label, info, guide,
+					&set);
+
+				window.draw(testString);
+
+				window.display();
+			}
+		}
+		else
+		{
+			updateMandelbrotWindow(
+				window,
+				setTexture, setRender,
+				upPanel, label, info, guide,
+				&set);
+
+			window.display();
+		}
+	}
+}
 
 void winXd::setUpperPanel(sf::Text& label, sf::Text& info)
 {
@@ -149,7 +281,29 @@ void winXd::checkMouseEvent(mandelbrot *set, sf::Event& event, coordinates *coor
 	}
 }
 
-void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set)
+void winXd::updateMandelbrotWindow(
+	sf::RenderWindow& window,
+	sf::Texture& setTexture, sf::Sprite& setRender,
+	sf::RectangleShape& upPanel, sf::Text& label, sf::Text& info, sf::Text& guide,
+	mandelbrot *set)
+{
+	setTexture.update((uint8_t *)set->pixels);
+	setRender.setTexture(setTexture, false);
+	window.draw(setRender);
+
+	set->renew(set->fpsString);
+
+	window.draw(upPanel);
+	window.draw(label);
+	window.draw(info);
+	window.draw(guide);
+
+	window.draw(set->checkInfo);
+	window.draw(set->modeString);	
+	window.draw(set->fpsString);
+}
+
+void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide)
 {
 	TEMP_WIDTH  = WIDTH;
 	TEMP_HEIGHT = HEIGHT;
@@ -159,6 +313,7 @@ void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set)
 
 	window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::Fullscreen);
 	window.setIcon(ICON_SIZE, ICON_SIZE, icon.getPixelsPtr());
+
 
 	set->pixels = (int *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(int));
 
@@ -173,9 +328,15 @@ void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set)
 		sf::Vector2f(WIDTH, 20),
 		sf::Color(1, 121, 216),
 		0, 0);
+
+	info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
+	guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
+	set->setModeString(reg, HEIGHT - 120, renderMode);
+
+	set->setCheckText(bold, HEIGHT - 100);
 }
 
-void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set)
+void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide)
 {
 	WIDTH  = TEMP_WIDTH;
 	HEIGHT = TEMP_HEIGHT;
@@ -195,6 +356,12 @@ void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set)
 		sf::Vector2f(WIDTH, 20),
 		sf::Color(1, 121, 216),
 		0, 0);
+
+	info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
+	guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
+	set->setModeString(reg, HEIGHT - 120, renderMode);
+
+	set->setCheckText(bold, HEIGHT - 100);
 }
 
 void winXd::checkSetEvent(sf::RenderWindow& window, mandelbrot *set, sf::Event& event)
@@ -302,13 +469,13 @@ void winXd::checkWindowEvent(sf::RenderWindow& window, mandelbrot *set, sf::Even
 	{
 		if (!isFullScreen)
 		{
-			createFullSreenWindow(window, set);
+			createFullSreenWindow(window, set, info, guide);
 			
 			isFullScreen = true;
 		}
 		else
 		{
-			createCommonSreenWindow(window, set);
+			createCommonSreenWindow(window, set, info, guide);
 
 			isFullScreen = false;
 		}
@@ -316,6 +483,13 @@ void winXd::checkWindowEvent(sf::RenderWindow& window, mandelbrot *set, sf::Even
 }
 
 /////////////////////////////////////////////////////////////// FUNCITONS ///////
+
+static int getDotColor(double t)
+{
+	return (int)(0x10000 * (9   * (int)(  ((double)1 - t) *              t  *              t  * t * 255)))
+		 + (int)(0x00100 * (15  * (int)(  ((double)1 - t) * ((double)1 - t) *              t  * t * 255)))
+		 + (int)(0x00001 * (8.5 * (int)(  ((double)1 - t) * ((double)1 - t) * ((double)1 - t) * t * 255)));
+}
 
 void renderSetAVX512f(const int windowWidth, const int windowHeight, mandelbrot *set)
 {
@@ -374,12 +548,7 @@ void renderSetAVX512f(const int windowWidth, const int windowHeight, mandelbrot 
 				{
 					if (1 & (cmp >> (i_cmp)))
 					{
-						set->pixels[pixels_pos + ((int64_t)15 - i_cmp)] += 
-							   (int)(0x10000 * (9   * (int)(  ((double)1 - t) *              t  *              t  * t * 255)) )
-							 + (int)(0x00100 * (15  * (int)(  ((double)1 - t) * ((double)1 - t) *              t  * t * 255)) )
-							 + (int)(0x00001 * (8.5 * (int)(  ((double)1 - t) * ((double)1 - t) * ((double)1 - t) * t * 255)));
-						// set->pixels[pixels_pos + ((int64_t)15 - i_cmp)] =
-						// 	(uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
+						set->pixels[pixels_pos + ((int64_t)15 - i_cmp)] += getDotColor(t);
 					}
 				}
 
@@ -446,12 +615,7 @@ void renderSetAVX(const int windowWidth, const int windowHeight, mandelbrot *set
 				{
 					if (*((int *)&cmp + i_cmp))
 					{
-						set->pixels[pixels_pos + ((int64_t)7 - i_cmp)] += 
-							   (int)(0x10000 * (9   * (int)(  ((double)1 - t) *              t  *              t  * t * 255)) )
-							 + (int)(0x00100 * (15  * (int)(  ((double)1 - t) * ((double)1 - t) *              t  * t * 255)) )
-							 + (int)(0x00001 * (8.5 * (int)(  ((double)1 - t) * ((double)1 - t) * ((double)1 - t) * t * 255)));
- 							
- 							// (uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n) + 01000000 * 5 * n));
+						set->pixels[pixels_pos + ((int64_t)7 - i_cmp)] += getDotColor(t);
 					}
 				}
 
@@ -513,14 +677,11 @@ void renderSetSSE(const int windowWidth, const int windowHeight, mandelbrot *set
 
 				double t = (double)n / (double)(set->MAX_CHECK);
 
-				for (int i_cmp = 0; i_cmp < 4; i_cmp++) {
-					if (*((int *)&cmp + i_cmp)) {
-						// set->pixels[pixels_pos + ((int64_t)3 - i_cmp)] =
-						// 	(uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
-						set->pixels[pixels_pos + ((int64_t)3 - i_cmp)] += 
-							   (int)(0x10000 * (9   * (int)(  ((double)1 - t) *              t  *              t  * t * 255)) )
-							 + (int)(0x00100 * (15  * (int)(  ((double)1 - t) * ((double)1 - t) *              t  * t * 255)) )
-							 + (int)(0x00001 * (8.5 * (int)(  ((double)1 - t) * ((double)1 - t) * ((double)1 - t) * t * 255)));
+				for (int i_cmp = 0; i_cmp < 4; i_cmp++)
+				{
+					if (*((int *)&cmp + i_cmp))
+					{
+						set->pixels[pixels_pos + ((int64_t)3 - i_cmp)] += getDotColor(t);
 					}
 				}
 
@@ -576,11 +737,7 @@ void renderSetNoOptimization(const int windowWidth, const int windowHeight, mand
 
 				if (cmp)
 				{
-					set->pixels[y * windowWidth + x] += 
-							   (int)(0x10000 * (9   * (int)(  ((double)1 - t) *              t  *              t  * t * 255)) )
-							 + (int)(0x00100 * (15  * (int)(  ((double)1 - t) * ((double)1 - t) *              t  * t * 255)) )
-							 + (int)(0x00001 * (8.5 * (int)(  ((double)1 - t) * ((double)1 - t) * ((double)1 - t) * t * 255)));
-					// set->pixels[y * windowWidth + x] = (uint32_t)(set->BLACK_COLOR_PIXEL + 0x00FF0000 - (0x0010000 * (n)+01000000 * 5 * n));
+					set->pixels[y * windowWidth + x] += getDotColor(t);
 				}
 
 				colored |= cmp;
