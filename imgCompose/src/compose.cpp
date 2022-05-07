@@ -1,8 +1,103 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <stdint.h>
+#include <windows.h>
+
+#include <time.h>
 
 #include "compose.h"
+
+void execute(composePicturesFrame *frame)
+{
+	SDL_Event event = {};
+	time_t timeSpend = 0;
+	size_t frames    = 0;
+
+	char strInfo[BUF_LEN] = "";
+	char mode[BUF_LEN]    = "SSE optimization";
+	bool isOptimizated    = true;
+
+	time_t startTime = clock();
+
+	while (frame->isRunning)
+	{
+		frames++;
+
+		SDL_PollEvent(&frame->event);
+
+		switch (frame->event.type)
+		{
+			case (SDL_QUIT):
+			{
+				frame->isRunning = false;
+				break;
+			}
+
+			case (SDL_KEYDOWN):
+			{
+				const Uint8* state = SDL_GetKeyboardState(NULL);
+
+				if (state[SDL_SCANCODE_T])
+				{
+					if (isOptimizated)
+					{
+						isOptimizated = false;
+						strcpy(mode, "No optimization ");
+
+						sprintf(strInfo, "fps:%zd mode:%s", frames, mode);
+						printf("\r%s", strInfo);
+
+					}
+					else
+					{
+						isOptimizated = true;
+						strcpy(mode, "SSE optimization");
+
+						sprintf(strInfo, "fps:%zd mode:%s", frames, mode);
+						printf("\r%s", strInfo);
+					}
+				}
+			}
+
+			default:
+			{
+				break;
+			}
+		}
+
+		startTime = clock();
+
+		SDL_Surface *outputImage = SDL_CreateRGBSurface(0, frame->width, frame->height, 32, 0, 0, 0, 0);
+
+		if (isOptimizated)
+		{
+			for (int index = 0; index < 20; index++)
+			{
+				picturesComposeSSE(frame->width, frame->height, frame, outputImage);
+			}
+		}
+		else
+		{
+			for (int index = 0; index < 20; index++)
+			{
+				picturesComposeSlow(frame->width, frame->height, frame, outputImage);
+			}
+		}
+
+		updateRender(frame, outputImage);
+		updateFps(&timeSpend, &startTime, &frames, strInfo, mode);
+	}
+}
+
+void crossPlatformMessage(const char *title, const char *msg)
+{
+	#ifdef _WIN32
+	 // 4-th argument - the style of the icon, button.
+	MessageBox(NULL, msg, title, 0);
+	#else
+	fprintf(stderr, msg);
+	#endif
+}
 
 composePicturesFrame *frameCtor(const char *bgPtr, const char *fgPtr)
 {
@@ -48,7 +143,34 @@ composePicturesFrame *frameCtor(const char *bgPtr, const char *fgPtr)
 	return frame;
 }
 
-int CalculateNewImage(uint32_t *backgroungImage, uint32_t *forgroundImage, uint32_t *outputImage)
+void picturesComposeSSE(const uint32_t width, const uint32_t height, composePicturesFrame *frame, SDL_Surface *outputImage)
+{
+	for (int y = 0; y < frame->height; y++)
+	{
+		for (int x = 0; x < frame->width; x += 4)
+		{
+			// picturesComposeSlow(width, height, frame);
+			CalculateNewPixels((uint32_t *)frame->foreground->pixels + frame->width * y + x, 
+							  (uint32_t *)frame->background->pixels + frame->width * y + x, 
+							  (uint32_t *)      outputImage->pixels + frame->width * y + x);
+		}
+	}
+}
+
+void picturesComposeSlow(const uint32_t width, const uint32_t height, composePicturesFrame *frame, SDL_Surface *outputImage)
+{
+	for (int y = 0; y < frame->height; y++)
+	{
+		for (int x = 0; x < frame->width; x += 1)
+		{
+			 CalculateNewPixelsSlow((uint32_t *)frame->foreground->pixels + frame->width * y + x,
+								  (uint32_t *)frame->background->pixels + frame->width * y + x,
+								  (uint32_t *)      outputImage->pixels + frame->width * y + x);
+		}
+	}
+}
+
+int CalculateNewPixels(uint32_t *backgroungImage, uint32_t *forgroundImage, uint32_t *outputImage)
 {
 	__m128i forgroundLow  = _mm_load_si128((__m128i *)forgroundImage);
 	__m128i backgroungLow = _mm_load_si128((__m128i *)backgroungImage);
@@ -90,7 +212,7 @@ int CalculateNewImage(uint32_t *backgroungImage, uint32_t *forgroundImage, uint3
 	return 0;
 }
 
-int CalculateNewImageSlow(uint32_t *backgroungImage, uint32_t *forgroundImage, uint32_t *outputImage)
+int CalculateNewPixelsSlow(uint32_t *backgroungImage, uint32_t *forgroundImage, uint32_t *outputImage)
 {
 	int color = 0x00000000;
 	// __m128i forgroundLow  = _mm_load_si128((__m128i *)forgroundImage);
@@ -150,4 +272,17 @@ void updateRender(composePicturesFrame *frame, SDL_Surface *outputImage)
 	SDL_RenderPresent(frame->renderer);
 
 	SDL_DestroyTexture(texture);
+}
+
+static void updateFps(time_t *timeSpend, time_t *startTime, size_t *frames, char *strInfo, const char *mode)
+{
+	*timeSpend += clock() - *startTime;
+	sprintf(strInfo, "fps:%zd mode:%s", *frames, mode);
+
+	if ((*timeSpend) > CLOCKS_PER_SEC)
+	{
+		*timeSpend = 0;
+		printf("\r%s", strInfo);
+		*frames = 0;
+	}
 }
