@@ -10,6 +10,7 @@
 #include <intrin.h>
 #else
 #include <cpuid.h>
+#include <immintrin.h>
 #endif
 
 #include <SFML/Graphics.hpp>
@@ -48,7 +49,7 @@ typedef struct
 	float x_shift = -0.3;
 	float y_shift =    0;
 
-	int MAX_CHECK = 1024;
+	int MAX_CHECK = 256;
 	
 	const int      mouseMovementSensivity  = 25000;
 	const uint32_t BLACK_COLOR_PIXEL       = 0xFF000000;

@@ -14,7 +14,7 @@ const int ATTEMPTS = 20;
 int main()
 {
 	mandelbrot set = {};
-	set.pixels = (unsigned int *)calloc(WIDTH * HEIGHT, sizeof(unsigned int));
+	set.pixels = (int *)calloc(WIDTH * HEIGHT, sizeof(int));
 
 	time_t start;
 
@@ -52,7 +52,7 @@ int main()
 		{
 			renderSetAVX512f(WIDTH, HEIGHT, &set);
 		}
-		printf("%-25s%f\n", "TIME AVX512:",             ((float)clock() / CLOCKS_PER_SEC - start) / ATTEMPTS);
+		printf("%-25s%f\n", "TIME AVX512:",      ((float)clock() / CLOCKS_PER_SEC - start) / ATTEMPTS);
 	}
 	else
 	{
