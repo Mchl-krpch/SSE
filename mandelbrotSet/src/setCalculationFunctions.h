@@ -5,12 +5,6 @@
 #ifndef _mandelbrot_
 #define _mandelbrot_
 
-#include <string.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <immintrin.h>
-#include <emmintrin.h>
-
 // For __cpuid
 #ifdef _WIN32
 #include <intrin.h>
@@ -28,19 +22,19 @@ typedef enum
 	OptimizationAVX512,
 } RenderMode;
 
-// FOR AVX 256
-const __m256 FULL_COLORED = _mm256_cmp_ps(_mm256_set1_ps(0), _mm256_set1_ps(0), _CMP_EQ_OQ);
+ // For AVX 256
+const __m256 FULL_COLORED = _mm256_cmp_ps(_mm256_set1_ps(0xFF), _mm256_set1_ps(0xFF), _CMP_EQ_OQ);
 const __m256 MUL_2        = _mm256_set1_ps(2.0);
 const __m256 R_NEED       = _mm256_set1_ps(100);
 
-// FOR SSE 128
+ // For SSE 128
 const __m128 MUL = _mm_set1_ps(2.0);
 const __m128 FULL_COLORED_128 = _mm_cmp_ps(_mm_set1_ps(0), _mm_set1_ps(0), _CMP_EQ_OQ);
 
-// FOR NO OPTIMIZATION
-static int NORM_FULL_COLORED = (0 == 0);
+ // For NO OPTIMIZATION
+static int NORM_FULL_COLORED = 1;
 static int NORM_R_NEED       = 100;
-const __m128 R_NEED_128 = _mm_set1_ps(100);
+const __m128 R_NEED_128      = _mm_set1_ps(100);
 
 typedef struct
 {
@@ -113,7 +107,7 @@ typedef struct
 		checkInfo.setPosition(10, height);
 	}
 
-	// FPS part.
+	 // FPS part.
 	sf::Clock  clock = {};
 	sf::Time   time  = clock.getElapsedTime();
 

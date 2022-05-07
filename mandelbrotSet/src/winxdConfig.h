@@ -72,6 +72,10 @@ static const char MSG_FAILED_TO_LOAD_ICON[] =
  "relative address res/icon.png relative\n"
  "to the executable .exe file?";
 
+static const char MSG_NEGATIV_NUMBER_OF_COLORS[] =
+ "You can not make the number\n"
+ "of drawn levels negative)";
+
 static const char CONTROL_INFO_TEXT[] = 
  "Use the \'up arrow\', \'down arrow\' to adjust the precision of the set.\n"
  "Use your mouse to navigate through the set\n"
