@@ -13,6 +13,8 @@
 #include <immintrin.h>
 #endif
 
+#include <string.h>
+
 #include <SFML/Graphics.hpp>
 
 typedef enum

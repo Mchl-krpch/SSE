@@ -18,23 +18,24 @@
 
 
 # Compiler settings.
-CC      = g++
-CFLAGS  = -mavx -mavx512f -mfma
-LIBS    = -lsfml-graphics -lsfml-window -lsfml-system
-QUITE   = 
-CONSOLE =
+	CC      = g++
+	CFLAGS  = -mavx -mavx512f -mfma
+	LIBS    = -lsfml-graphics -lsfml-window -lsfml-system
+	QUITE   = 
+	CONSOLE =
 
 # Folders with library on computer
-	INCLUDE_PTR = "SFML-2.5.1\include"
-	LIBRARY_PTR = "SFML-2.5.1\build\lib"
-	BUILD_LIB   = build
+	INCLUDE_PTR = "SFML-2.5.1\\include"
+	LIBRARY_PTR = "SFML-2.5.1\\build\\lib"
+	BUILD_LIB   = build\\
 
 # Files to compile.
-TARGET     = benchmark
-TARGET_RES = my
+	TARGETS     = main.cpp winxd.cpp setCalculationFunctions.cpp
+	OBJS        = $(TARGETS:.cpp=.o)
+	TARGET_RES = res\\
 
 # Output file name.
-EXECUTABLE = mandelbrotSet
+	EXECUTABLE = mandelbrotSet
 
 
 # Check different types of make process
@@ -45,16 +46,17 @@ endif
 
 ifeq ($(MAKE_MODE), RUN)
 QUITE += @
-all: compile execute
+all: $(OBJS) compile execute
 endif
 
 execute: $(EXECUTABLE)
 	$(QUITE)./$(EXECUTABLE)
 
-compile: $(TARGET).cpp
-	@clear
-	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp -o $(TARGET).o
-	$(QUITE) $(CC) $(CONSOLE) $(TARGET).o $(LIBS) -o $(EXECUTABLE)
+compile: $(OBJS)
+	$(QUITE) $(CC) $(CONSOLE) $(OBJS) -L$(LIBRARY_PTR) $(LIBS) -o $(EXECUTABLE)
+
+$(OBJS): %.o:%.cpp
+	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $< -o $@
 
 clean:
-	del $(BUILD_LIB)/$(EXECUTABLE).exe $(BUILD_LIB)/*.o
+	rm $(BUILD_LIB)$(EXECUTABLE).exe *.o

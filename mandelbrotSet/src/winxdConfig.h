@@ -52,34 +52,34 @@ static const char MSG_AVX512_NOT_SUPPORTED[] =
  "but 3 standard modes will work for you:\n"
  " 1. without optimizations\n"
  " 2. sse optimization\n"
- " 3. avx256 optimization";
+ " 3. avx256 optimization\n";
 
 static const char MSG_FAILED_TO_LOAD_BOLD_FONT[] =
  "I think you misplaced the fonts folder,\n"
  "check if the font file should be located\n"
  "at the relative address res/bold.ttf\n"
- "relative to the executable .exe file";
+ "relative to the executable .exe file\n";
 
 static const char MSG_FAILED_TO_LOAD_REGULAR_FONT[] =
  "I think you misplaced the fonts folder,\n"
  "check if the font file should be located\n"
  "at the relative address res/reg.ttf\n"
- "relative to the executable .exe file";
+ "relative to the executable .exe file\n";
 
 static const char MSG_FAILED_TO_LOAD_ICON[] =
  "most likely the matter is in the location\n"
  "of the icon, do you have it at the\n"
  "relative address res/icon.png relative\n"
- "to the executable .exe file?";
+ "to the executable .exe file?\n";
 
 static const char MSG_NEGATIV_NUMBER_OF_COLORS[] =
  "You can not make the number\n"
- "of drawn levels negative)";
+ "of drawn levels negative)\n";
 
 static const char CONTROL_INFO_TEXT[] = 
  "Use the \'up arrow\', \'down arrow\' to adjust the precision of the set.\n"
  "Use your mouse to navigate through the set\n"
- "Also you can use \'T\' to change renderMode of rendering";
+ "Also you can use \'T\' to change renderMode of rendering\n";
 
 void crossPlatformMessage(const char *title, const char *msg);
 
