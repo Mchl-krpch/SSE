@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
 	execute(frame);
 
-	free(frame);
+	frame = frameDtor(frame);
 
 	return 0;
 }

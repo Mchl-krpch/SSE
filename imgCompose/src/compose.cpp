@@ -1,8 +1,10 @@
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <SDL.h>
 #include <stdint.h>
-#include <windows.h>
-
 #include <time.h>
 
 #include "compose.h"
@@ -143,6 +145,25 @@ composePicturesFrame *frameCtor(const char *bgPtr, const char *fgPtr)
 	return frame;
 }
 
+composePicturesFrame *frameDtor(composePicturesFrame *frame)
+{
+	SDL_FreeSurface(frame->surface);
+	frame->surface = NULL;
+
+	frame->renderer = NULL;
+
+	SDL_DestroyWindow(frame->window);
+	frame->window = NULL;
+
+	SDL_FreeSurface(frame->foreground);
+	frame->foreground = NULL;
+
+	SDL_FreeSurface(frame->background);
+	frame->background = NULL;
+
+	return NULL;
+}
+
 void picturesComposeSSE(const uint32_t width, const uint32_t height, composePicturesFrame *frame, SDL_Surface *outputImage)
 {
 	for (int y = 0; y < frame->height; y++)
@@ -163,9 +184,10 @@ void picturesComposeSlow(const uint32_t width, const uint32_t height, composePic
 	{
 		for (int x = 0; x < frame->width; x += 1)
 		{
-			 CalculateNewPixelsSlow((uint32_t *)frame->foreground->pixels + frame->width * y + x,
-								  (uint32_t *)frame->background->pixels + frame->width * y + x,
-								  (uint32_t *)      outputImage->pixels + frame->width * y + x);
+			 CalculateNewPixelsSlow(
+			 	(uint32_t *)frame->foreground->pixels + frame->width * y + x,
+				(uint32_t *)frame->background->pixels + frame->width * y + x,
+				(uint32_t *)      outputImage->pixels + frame->width * y + x);
 		}
 	}
 }
@@ -232,15 +254,15 @@ int CalculateNewPixelsSlow(uint32_t *backgroungImage, uint32_t *forgroundImage, 
 					 ( ( (forgroundLow  >> 8 )  & 0xFF) * fgAlphaChannel / 255) << 8;
 
 	forgroundHigh =  ( ( (forgroundHigh >> 16)  & 0xFF) * fgAlphaChannel / 255) << 16 |
-					 ( ( (forgroundHigh >> 24)  & 0xFF) * fgAlphaChannel / 255) << 24;
+					 (( ( (forgroundHigh >> 24)  & 0xFF) * fgAlphaChannel / 255) << 24) + 
+					 0x000A5055; // << I add this value to understand that current mode is 'no optimization'
 
-	backgroungLow  = ( ( (backgroungLow       ) & 0xFF) * (255 - fgAlphaChannel) / 255)        |
+	backgroungLow =  ( ( (backgroungLow       ) & 0xFF) * (255 - fgAlphaChannel) / 255)        |
 					 ( ( (backgroungLow  >> 8 ) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 8;
 
 	backgroungHigh = ( ( (backgroungHigh >> 16) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 16 |
-					 ( ( (backgroungHigh >> 24) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 24;
-	
-	backgroungHigh += 0x0000002F; // << I add this value to understand that current mode is 'no optimization'
+					 (( ( (backgroungHigh >> 24) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 24) +
+					 0x000A5055; // << I add this value to understand that current mode is 'no optimization'
 
 	int colorResult = (forgroundLow | forgroundHigh) | (backgroungLow | backgroungHigh);
 

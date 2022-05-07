@@ -62,6 +62,7 @@ int main()
 
 	free(foreground);
 	free(background);
+	free(output);
 
 	return 0;
 }

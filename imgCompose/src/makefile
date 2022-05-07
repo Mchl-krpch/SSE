@@ -2,6 +2,8 @@
 # on SDL2 library for windows 10.
 # Because SFML I used in Mandelbrot app
 
+	MODE = TEST
+
 # Compilers in project.
 # Standarg compiler for files *.cpp
 	CC         = g++
@@ -13,8 +15,11 @@
 	CC_FLAGS   = -mavx -mavx512f -mfma -O0
 
 	RES_TARGET = res.rc
-# 	TARGETS    = main.cpp compose.cpp
+ifeq ($(MODE),TEST)
 	TARGETS    = benchmark.cpp compose.cpp
+else
+	TARGETS    = main.cpp compose.cpp
+endif
 	OBJS       = $(TARGETS:.cpp=.o)
 
 # Name of output built program.

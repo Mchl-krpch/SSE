@@ -3,9 +3,9 @@
 #include "winxdConfig.h"
 
 void setRectSettings(
-	sf::RectangleShape&  rect,
-	const sf::Vector2f&  vector,
-	const    sf::Color&  color,
+	sf::RectangleShape& rect,
+	const sf::Vector2f& vector,
+	const    sf::Color& color,
 	const int posX,
 	const int posY)
 {
@@ -202,6 +202,8 @@ void winXd::create(const char *name)
 			window.display();
 		}
 	}
+
+	free(set.pixels);
 }
 
 void winXd::setUpperPanel(sf::Text& NameInUpperPanel, sf::Text& windowShortcuts)
