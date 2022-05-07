@@ -1,7 +1,4 @@
 # Debug libs
-mandel2
-mandelbrotSet/old
-imgComposing/
 
 # object files
 *.o
