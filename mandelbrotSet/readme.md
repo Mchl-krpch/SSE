@@ -8,6 +8,8 @@ go to the RELEASES section on github.</br>
 This is a small application that renders the mandelbrot set. You can find similar
 app [google search](https://www.google.com/search?q=mandelbrot+set)</br>
 
+![beauty](readmeRes/beautyOfSet.jpg)</br>
+
 This application supports 4 types of rendering:
 - No optimization
 - sse optimization
