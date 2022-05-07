@@ -215,47 +215,34 @@ int CalculateNewPixels(uint32_t *backgroungImage, uint32_t *forgroundImage, uint
 int CalculateNewPixelsSlow(uint32_t *backgroungImage, uint32_t *forgroundImage, uint32_t *outputImage)
 {
 	int color = 0x00000000;
-	// __m128i forgroundLow  = _mm_load_si128((__m128i *)forgroundImage);
-	// __m128i backgroungLow = _mm_load_si128((__m128i *)backgroungImage);
+
 	int forgroundColor  = *forgroundImage;
 	int backgroungColor = *backgroungImage;
 
-	// __m128i forgroundHigh  = (__m128i)_mm_movehl_ps((__m128)ZERO_M128, (__m128)forgroundLow);
-	// __m128i backgroungHigh = (__m128i)_mm_movehl_ps((__m128)ZERO_M128, (__m128)backgroungLow);
 	int forgroundHigh  = forgroundColor  & 0xFFFF0000;
 	int backgroungHigh = backgroungColor & 0xFFFF0000;
 
-	// forgroundLow  = _mm_cvtepu8_epi16(forgroundLow);
-	// forgroundHigh = _mm_cvtepu8_epi16(forgroundHigh);
 	int forgroundLow  = forgroundColor  & 0x0000FFFF;
 	int backgroungLow = backgroungColor & 0x0000FFFF;
 
 	int fgAlphaChannel = (forgroundColor  >> 24) & 0x0FF;
 	int bgAlphaChannel = (backgroungColor >> 24) & 0x0FF;
 
-	// __m128i alphaLow  = _mm_shuffle_epi8(forgroundLow,  moveAlphaMask);
-	// __m128i alphaHigh = _mm_shuffle_epi8(forgroundHigh, moveAlphaMask);
-	forgroundLow  *= fgAlphaChannel / 255;
-	forgroundHigh *= fgAlphaChannel / 255;
+	forgroundLow  = ( ( (forgroundLow       ) & 0xFF) * fgAlphaChannel / 255)       |
+					( ( (forgroundLow  >> 8 ) & 0xFF) * fgAlphaChannel / 255) << 8;
 
-	// forgroundLow  = _mm_mullo_epi16(forgroundLow,  alphaLow);
-	// forgroundHigh = _mm_mullo_epi16(forgroundHigh, alphaHigh);
-	// backgroungLow  = _mm_mullo_epi16(backgroungLow,  _mm_sub_epi16(MAX_NUM_M128, alphaLow));
-	// backgroungHigh = _mm_mullo_epi16(backgroungHigh, _mm_sub_epi16(MAX_NUM_M128, alphaHigh));
-	backgroungLow  *= ((255 - fgAlphaChannel) / 255);
-	backgroungHigh *= ((255 - fgAlphaChannel) / 255);
+	forgroundHigh = ( ( (forgroundHigh >> 16) & 0xFF) * fgAlphaChannel / 255) << 16 |
+					( ( (forgroundHigh >> 24) & 0xFF) * fgAlphaChannel / 255) << 24;
 
-	// __m128i sumLow  = _mm_add_epi16(forgroundLow,  backgroungLow);
-	// __m128i sumHigh = _mm_add_epi16(forgroundHigh, backgroungHigh);
+	backgroungLow  = ( ( (backgroungLow       ) & 0xFF) * (255 - fgAlphaChannel) / 255)        |
+					 ( ( (backgroungLow  >> 8 ) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 8;
 
-	// static const __m128i moveSumMask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 
-	// 												 0xF,  0xD,  0xB,  0x9,  0x7,  0x5,  0x3,  0x1);
-	// sumLow  = _mm_shuffle_epi8(sumLow,  moveSumMask);
-	// sumHigh = _mm_shuffle_epi8(sumHigh, moveSumMask);
-	// __m128i color = (__m128i)_mm_movelh_ps((__m128)sumLow, (__m128)sumHigh);
-	int colorResult = (forgroundLow + forgroundHigh) + (backgroungLow + backgroungHigh);
+	backgroungHigh = ( ( (backgroungHigh >> 16) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 16 |
+					 ( ( (backgroungHigh >> 24) & 0xFF) * (255 - fgAlphaChannel) / 255 ) << 24 +
+					 0x0000002F; // << I add this value to understand that current mode is 'no optimization'
 
-	// _mm_store_si128 ((__m128i *)outputImage, color);
+	int colorResult = (forgroundLow | forgroundHigh) | (backgroungLow | backgroungHigh);
+
 	*outputImage = (uint32_t)colorResult;
 
 	return 0;
