@@ -92,7 +92,7 @@ void winXd::create(const char *name)
 	}
 
 	 // Set settings to upper panel and UX instruction.
-	setUpperPanel   (label, info);
+	setUpperPanel   (NameInUpperPanel, windowShortcuts);
 	setControlLabel (guideString, guide);
 
 	window.create(sf::VideoMode(WIDTH, HEIGHT),	name, sf::Style::None);
@@ -181,7 +181,7 @@ void winXd::create(const char *name)
 				updateMandelbrotWindow(
 					window,
 					setTexture, setRender,
-					upPanel, label, info, guide,
+					upPanel, NameInUpperPanel, windowShortcuts, guide,
 					&set);
 
 				window.draw(testString);
@@ -194,7 +194,7 @@ void winXd::create(const char *name)
 			updateMandelbrotWindow(
 				window,
 				setTexture, setRender,
-				upPanel, label, info, guide,
+				upPanel, NameInUpperPanel, windowShortcuts, guide,
 				&set);
 
 			window.display();
@@ -202,20 +202,20 @@ void winXd::create(const char *name)
 	}
 }
 
-void winXd::setUpperPanel(sf::Text& label, sf::Text& info)
+void winXd::setUpperPanel(sf::Text& NameInUpperPanel, sf::Text& windowShortcuts)
 {
 	setRectSettings(upPanel, sf::Vector2f(WIDTH, 20),
 					highlightedColor, 0, 0);
 
-	label.setString("winXd:mandelbrot");
-	label.setFont(bold);
-	label.setCharacterSize(STD_FONT_SIZE);
-	label.setPosition(3, 1);
+	NameInUpperPanel.setString("winXd:mandelbrot");
+	NameInUpperPanel.setFont(bold);
+	NameInUpperPanel.setCharacterSize(STD_FONT_SIZE);
+	NameInUpperPanel.setPosition(3, 1);
 
-	info.setString("Esc:exit V:minimize O:FullScreen/SmallScreen");
-	info.setFont(reg);
-	info.setCharacterSize(STD_FONT_SIZE);
-	info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
+	windowShortcuts.setString("Esc:exit V:minimize O:FullScreen/SmallScreen");
+	windowShortcuts.setFont(reg);
+	windowShortcuts.setCharacterSize(STD_FONT_SIZE);
+	windowShortcuts.setPosition(WIDTH - windowShortcuts.getLocalBounds().width - ELEMENTS_MARGIN, 1);
 }
 
 void winXd::setControlLabel(char *guideString, sf::Text& guide)
@@ -233,7 +233,7 @@ void winXd::setFpsText(sf::Text& fpsString)
 {
 	fpsString.setFont(reg);
 	fpsString.setCharacterSize(STD_FONT_SIZE);
-	fpsString.setPosition(label.getLocalBounds().width + 2 * ELEMENTS_MARGIN, 1);
+	fpsString.setPosition(NameInUpperPanel.getLocalBounds().width + 2 * ELEMENTS_MARGIN, 1);
 }
 
 void winXd::checkMouseEvent(mandelbrot *set, sf::Event& event, coordinates *coords)
@@ -284,7 +284,7 @@ void winXd::checkMouseEvent(mandelbrot *set, sf::Event& event, coordinates *coor
 void winXd::updateMandelbrotWindow(
 	sf::RenderWindow& window,
 	sf::Texture& setTexture, sf::Sprite& setRender,
-	sf::RectangleShape& upPanel, sf::Text& label, sf::Text& info, sf::Text& guide,
+	sf::RectangleShape& upPanel, sf::Text& NameInUpperPanel, sf::Text& windowShortcuts, sf::Text& guide,
 	mandelbrot *set)
 {
 	setTexture.update((uint8_t *)set->pixels);
@@ -294,16 +294,16 @@ void winXd::updateMandelbrotWindow(
 	set->renew(set->fpsString);
 
 	window.draw(upPanel);
-	window.draw(label);
-	window.draw(info);
+	window.draw(NameInUpperPanel);
+	window.draw(windowShortcuts);
 	window.draw(guide);
 
-	window.draw(set->checkInfo);
-	window.draw(set->modeString);	
+	window.draw(set->DetailLevelString);
+	window.draw(set->modeString);
 	window.draw(set->fpsString);
 }
 
-void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide)
+void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf::Text& windowShortcuts, sf::Text& guide)
 {
 	TEMP_WIDTH  = WIDTH;
 	TEMP_HEIGHT = HEIGHT;
@@ -329,14 +329,14 @@ void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf:
 		sf::Color(1, 121, 216),
 		0, 0);
 
-	info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
+	windowShortcuts.setPosition(WIDTH - windowShortcuts.getLocalBounds().width - ELEMENTS_MARGIN, 1);
 	guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
 	set->setModeString(reg, HEIGHT - 120, renderMode);
 
 	set->setCheckText(bold, HEIGHT - 100);
 }
 
-void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide)
+void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set, sf::Text& windowShortcuts, sf::Text& guide)
 {
 	WIDTH  = TEMP_WIDTH;
 	HEIGHT = TEMP_HEIGHT;
@@ -357,7 +357,7 @@ void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set, s
 		sf::Color(1, 121, 216),
 		0, 0);
 
-	info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
+	windowShortcuts.setPosition(WIDTH - windowShortcuts.getLocalBounds().width - ELEMENTS_MARGIN, 1);
 	guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
 	set->setModeString(reg, HEIGHT - 120, renderMode);
 
@@ -424,6 +424,7 @@ void winXd::checkSetEvent(sf::RenderWindow& window, mandelbrot *set, sf::Event& 
 	if (event.key.code == sf::Keyboard::Up)
 	{
 		set->MAX_CHECK++;
+		set->setCheckText(bold, HEIGHT - 100);
 	}
 
 	if (event.key.code == sf::Keyboard::Down)
@@ -436,6 +437,8 @@ void winXd::checkSetEvent(sf::RenderWindow& window, mandelbrot *set, sf::Event& 
 		{
 			set->MAX_CHECK--;
 		}
+
+		set->setCheckText(bold, HEIGHT - 100);
 	}
 }
 
@@ -461,13 +464,13 @@ void winXd::checkWindowEvent(sf::RenderWindow& window, mandelbrot *set, sf::Even
 	{
 		if (!isFullScreen)
 		{
-			createFullSreenWindow(window, set, info, guide);
+			createFullSreenWindow(window, set, windowShortcuts, guide);
 			
 			isFullScreen = true;
 		}
 		else
 		{
-			createCommonSreenWindow(window, set, info, guide);
+			createCommonSreenWindow(window, set, windowShortcuts, guide);
 
 			isFullScreen = false;
 		}

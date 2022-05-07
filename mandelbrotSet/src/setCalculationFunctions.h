@@ -39,7 +39,7 @@ const __m128 R_NEED_128      = _mm_set1_ps(100);
 typedef struct
 {
 	sf::Text modeString;
-	sf::Text checkInfo;
+	sf::Text DetailLevelString;
 	sf::Text fpsString;
 
 	int *pixels = NULL;
@@ -94,17 +94,17 @@ typedef struct
 
 	void setCheckText(sf::Font& font, const int height)
 	{
-		checkInfo.setFillColor(sf::Color(255, 255, 255, 200));
+		DetailLevelString.setFillColor(sf::Color(255, 255, 255, 200));
 
 		char string[256] = "";
 		char num[5] = "";
 		strcpy(string, "Detail level:");
 		sprintf(num, "%u", MAX_CHECK);
 		strcat(string, num);
-		checkInfo.setString(string);
+		DetailLevelString.setString(string);
 
-		checkInfo.setFont(font);
-		checkInfo.setPosition(10, height);
+		DetailLevelString.setFont(font);
+		DetailLevelString.setPosition(10, height);
 	}
 
 	 // FPS part.

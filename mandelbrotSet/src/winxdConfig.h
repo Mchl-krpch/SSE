@@ -129,8 +129,8 @@ private:// Constants.
 	sf::RectangleShape upPanel;
 
 	 // Upper panel elements.
-	sf::Text label;
-	sf::Text info;
+	sf::Text NameInUpperPanel;
+	sf::Text windowShortcuts;
 
 	 // Color palette
 	sf::Color highlightedColor {  1, 121, 216,  255};
@@ -143,8 +143,8 @@ private:// Constants.
 
 private:// Functions.
 
-	void createFullSreenWindow   (sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide);
-	void createCommonSreenWindow (sf::RenderWindow& window, mandelbrot *set, sf::Text& info, sf::Text& guide);
+	void createFullSreenWindow   (sf::RenderWindow& window, mandelbrot *set, sf::Text& windowShortcuts, sf::Text& guide);
+	void createCommonSreenWindow (sf::RenderWindow& window, mandelbrot *set, sf::Text& windowShortcuts, sf::Text& guide);
 
 	void checkSetEvent    (sf::RenderWindow& window, mandelbrot *set, sf::Event& event);
 	void checkWindowEvent (sf::RenderWindow& window, mandelbrot *set, sf::Event& event);
@@ -172,13 +172,13 @@ private:// Functions.
 	}
 
 	 // UI-Element constructors.
-	void setUpperPanel(sf::Text& label, sf::Text& info);
+	void setUpperPanel(sf::Text& label, sf::Text& windowShortcuts);
 	void setControlLabel(char *guideString, sf::Text& guide);
 	void setFpsText(sf::Text& fpsString);
 
 	void updateMandelbrotWindow(sf::RenderWindow& window,
 		sf::Texture& setTexture,sf::Sprite& setRender,
-		sf::RectangleShape& upPanel, sf::Text& label, sf::Text& info, sf::Text& guide,
+		sf::RectangleShape& upPanel, sf::Text& label, sf::Text& windowShortcuts, sf::Text& guide,
 		mandelbrot *set);
 
 public:
