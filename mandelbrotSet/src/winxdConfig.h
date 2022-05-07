@@ -15,8 +15,9 @@
  // Global constants.
 const int BUF_LEN = 256;
 
-const int ICON_SIZE = 128;
-const int STD_FONT_SIZE = 14;
+const int ICON_SIZE       = 128;
+const int BIG_FONT_SIZE   = 24;
+const int STD_FONT_SIZE   = 14;
 const int ELEMENTS_MARGIN = 10;
 
 static const char *BOLD_FONT_PTR = "res/bold.ttf";
@@ -65,7 +66,25 @@ static const char MSG_FAILED_TO_LOAD_REGULAR_FONT[] =
  "at the relative address res/reg.ttf\n"
  "relative to the executable .exe file";
 
+static const char MSG_FAILED_TO_LOAD_ICON[] =
+ "most likely the matter is in the location\n"
+ "of the icon, do you have it at the\n"
+ "relative address res/icon.png relative\n"
+ "to the executable .exe file?";
+
+static const char CONTROL_INFO_TEXT[] = 
+ "Use the \'up arrow\', \'down arrow\' to adjust the precision of the set.\n"
+ "Use your mouse to navigate through the set\n"
+ "Also you can use \'T\' to change renderMode of rendering";
+
 void crossPlatformMessage(const char *title, const char *msg);
+
+void setRectSettings(
+	sf::RectangleShape& rect,
+	const sf::Vector2f& vector,
+	const    sf::Color& color,
+	const int posX,
+	const int posY);
 
 class winXd
 {
@@ -105,8 +124,18 @@ private:// Constants.
 	sf::Sprite setRender;
 	sf::RectangleShape upPanel;
 
+	 // Upper panel elements.
+	sf::Text label;
+	sf::Text info;
+
+	 // Color palette
+	sf::Color highlightedColor {  1, 121, 216,  255};
+	sf::Color paleWhite        {255, 255, 255,  150};
+
 	 // Window controls
 	sf::Mouse mouse;
+	sf::Text  guide;
+	char *guideString = (char *)calloc(BUF_LEN, sizeof(char));
 
 private:// Functions.
 
@@ -138,17 +167,10 @@ private:// Functions.
 		}
 	}
 
-	void setRectSettings(
-		sf::RectangleShape&  rect,
-		const sf::Vector2f&  vector,
-		const    sf::Color&  color,
-		const int posX,
-		const int posY)
-	{
-		rect.setSize(vector);
-		rect.setFillColor(color);
-		rect.setPosition((float)posX, (float)posY);
-	}
+	 // UI-Element constructors.
+	void setUpperPanel(sf::Text& label, sf::Text& info);
+	void setControlLabel(char *guideString, sf::Text& guide);
+	void setFpsText(sf::Text& fpsString);
 
 public:
 	void create(const char *name)
@@ -173,75 +195,37 @@ public:
 			crossPlatformMessage("Application failed to load regular font", MSG_FAILED_TO_LOAD_REGULAR_FONT);
 		}
 
-		// Set settings to upper panel.
-		setRectSettings(
-			upPanel,
-			sf::Vector2f(WIDTH, 20),
-			sf::Color(1, 121, 216),
-			0, 0);
+		 // Set settings to upper panel and UX instruction.
+		setUpperPanel   (label, info);
+		setControlLabel (guideString, guide);
 
-		sf::Text label("winXd:mandelbrot", bold, STD_FONT_SIZE);
-		label.setPosition(3, 1);
-
-		sf::Text fps("fps:", reg, STD_FONT_SIZE);
-		fps.setPosition(label.getLocalBounds().width + 3 + ELEMENTS_MARGIN, 1);
-
-		sf::Text info("Esc:exit V:minimize O:FullScreen/SmallScreen", reg, STD_FONT_SIZE);
-		info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
-
-		char *guideString = (char *)calloc(BUF_LEN, sizeof(char));
-		strcpy(guideString,
-			"Use the \'up arrow\', \'down arrow\' to adjust the precision of the set.\n"
-			"Use your mouse to navigate through the set\n"
-			"Also you can use \'T\' to change renderMode of rendering");
-
-		sf::Text guide(guideString, reg, 14);
-		guide.setFillColor(sf::Color(255, 255, 255, 150));
-		guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
-
-		window.create(
-			sf::VideoMode(WIDTH, HEIGHT),
-			name,
-			sf::Style::None);
+		window.create(sf::VideoMode(WIDTH, HEIGHT),	name, sf::Style::None);
 
 		if (!icon.loadFromFile(ICON_PTR))
 		{
-			#ifdef _WIN32
-			MessageBox(NULL,
-				"most likely the matter is in the location\n"
-				"of the icon, do you have it at the\n"
-				"relative address res/icon.png relative\n"
-				"to the executable .exe file?",
-
-				"failed to load image",
-
-				0);
-			#endif
+			crossPlatformMessage("Failed to load icon", MSG_FAILED_TO_LOAD_ICON);
 		}
 
 		window.setIcon(ICON_SIZE, ICON_SIZE, icon.getPixelsPtr());
 
 		setTexture.create(WIDTH, HEIGHT);
 
-		setRender.setPosition(0, 0);
+		setRender.setPosition(0, 20);
 		coordinates coords;
 
 		mandelbrot set;
-		set.pixels = (unsigned *)calloc(WIDTH * HEIGHT, sizeof(unsigned));
+		set.pixels = (int *)calloc(WIDTH * HEIGHT, sizeof(int));
 		set.setCheckText(bold, HEIGHT - 100);
 
-		set.fpsString.setFont(reg);
-		set.fpsString.setCharacterSize(STD_FONT_SIZE);
-		set.fpsString.setPosition(label.getLocalBounds().width + 2 * ELEMENTS_MARGIN, 1);
-		set.renew(set.fpsString);
-
+		setFpsText(set.fpsString);
 		set.setModeString(reg, HEIGHT - 120, renderMode);
 
+// here >
 		time_t timeSpend = 0;
 		time_t startTime = clock() / CLOCKS_PER_SEC;
 		isTesting = false;
 
-		sf::Text testString("TESTING", bold, 24);
+		sf::Text testString("TESTING", bold, BIG_FONT_SIZE);
 		testString.setPosition(30, 30);
 
 		while (window.isOpen())
@@ -252,21 +236,36 @@ public:
 			window.clear(sf::Color::Transparent);
 
 			// Update set.
-			if (renderMode == RenderMode::NoOptimizationMode)
+			switch (renderMode)
 			{
-				renderSetNoOptimization(WIDTH, HEIGHT, &set);
-			}
-			if (renderMode == RenderMode::OptimizationSSE)
-			{
-				renderSetSSE(WIDTH, HEIGHT, &set);
-			}
-			if (renderMode == RenderMode::OptimizationAVX256)
-			{
-				renderSetAVX(WIDTH, HEIGHT, &set);
-			}
-			if (renderMode == RenderMode::OptimizationAVX512 && isAVX512supported)
-			{
-				renderSetAVX512f(WIDTH, HEIGHT, &set);
+				case (RenderMode::NoOptimizationMode):
+				{
+					renderSetNoOptimization(WIDTH, HEIGHT, &set);
+					break;
+				}
+				case (RenderMode::OptimizationSSE):
+				{
+					renderSetSSE(WIDTH, HEIGHT, &set);
+					break;
+				}
+				case (RenderMode::OptimizationAVX256):
+				{
+					renderSetAVX(WIDTH, HEIGHT, &set);
+					break;
+				}
+				case (RenderMode::OptimizationAVX512):
+				{
+					if (isAVX512supported)
+					{
+						renderSetAVX512f(WIDTH, HEIGHT, &set);
+					}
+					break;
+				}
+				default:
+				{
+					renderSetNoOptimization(WIDTH, HEIGHT, &set);
+					break;
+				}
 			}
 
 			if (isTesting)

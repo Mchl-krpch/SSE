@@ -48,7 +48,7 @@ typedef struct
 	sf::Text checkInfo;
 	sf::Text fpsString;
 
-	unsigned *pixels = NULL;
+	int *pixels = NULL;
 	
 	float scale   = 0.23;
 	float x_shift = -0.3;

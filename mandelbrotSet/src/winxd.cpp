@@ -1,5 +1,17 @@
 #include "winxdConfig.h"
 
+void setRectSettings(
+	sf::RectangleShape&  rect,
+	const sf::Vector2f&  vector,
+	const    sf::Color&  color,
+	const int posX,
+	const int posY)
+{
+	rect.setSize(vector);
+	rect.setFillColor(color);
+	rect.setPosition((float)posX, (float)posY);
+}
+
 void crossPlatformMessage(const char *title, const char *msg)
 {
 	#ifdef _WIN32
@@ -58,6 +70,40 @@ bool IsAVX512InTouch()
 }
 #endif
 
+void winXd::setUpperPanel(sf::Text& label, sf::Text& info)
+{
+	setRectSettings(upPanel, sf::Vector2f(WIDTH, 20),
+					highlightedColor, 0, 0);
+
+	label.setString("winXd:mandelbrot");
+	label.setFont(bold);
+	label.setCharacterSize(STD_FONT_SIZE);
+	label.setPosition(3, 1);
+
+	info.setString("Esc:exit V:minimize O:FullScreen/SmallScreen");
+	info.setFont(reg);
+	info.setCharacterSize(STD_FONT_SIZE);
+	info.setPosition(WIDTH - info.getLocalBounds().width - ELEMENTS_MARGIN, 1);
+}
+
+void winXd::setControlLabel(char *guideString, sf::Text& guide)
+{
+	strcpy(guideString, CONTROL_INFO_TEXT);
+
+	guide.setString(guideString);
+	guide.setFont(reg);
+	guide.setCharacterSize(14);
+	guide.setFillColor(paleWhite);
+	guide.setPosition(ELEMENTS_MARGIN, HEIGHT - guide.getLocalBounds().height - ELEMENTS_MARGIN);
+}
+
+void winXd::setFpsText(sf::Text& fpsString)
+{
+	fpsString.setFont(reg);
+	fpsString.setCharacterSize(STD_FONT_SIZE);
+	fpsString.setPosition(label.getLocalBounds().width + 2 * ELEMENTS_MARGIN, 1);
+}
+
 void winXd::checkMouseEvent(mandelbrot *set, sf::Event& event, coordinates *coords)
 {
 	if (event.type == sf::Event::MouseButtonPressed)
@@ -114,7 +160,7 @@ void winXd::createFullSreenWindow(sf::RenderWindow& window, mandelbrot *set)
 	window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::Fullscreen);
 	window.setIcon(ICON_SIZE, ICON_SIZE, icon.getPixelsPtr());
 
-	set->pixels = (unsigned *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(unsigned));
+	set->pixels = (int *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(int));
 
 	setTexture.create(WIDTH, HEIGHT);
 	setRender.setPosition(0, 0);
@@ -137,7 +183,7 @@ void winXd::createCommonSreenWindow(sf::RenderWindow& window, mandelbrot *set)
 	window.create(sf::VideoMode(WIDTH, HEIGHT), "Mandelbrot set", sf::Style::None);
 	window.setIcon(ICON_SIZE, ICON_SIZE, icon.getPixelsPtr());
 
-	set->pixels = (unsigned *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(unsigned));
+	set->pixels = (int *)realloc(set->pixels, WIDTH * HEIGHT * sizeof(int));
 	
 	setTexture.create(WIDTH, HEIGHT);
 	setRender.setPosition(0, 0);
