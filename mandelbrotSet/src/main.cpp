@@ -1,10 +1,8 @@
-// My module
-#ifdef _WIN32
-#include <windows.h>
-#endif
+// This is application starter
+// file. You can check libraries.
 
-#include "winXd.hpp"
-#include "mandelbrot.hpp"
+#include "winxdConfig.h"
+#include "setCalculationFunctions.h"
 
 int main()
 {

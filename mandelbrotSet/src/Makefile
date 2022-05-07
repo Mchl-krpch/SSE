@@ -29,7 +29,8 @@
 	BUILD_LIB   = ..\\build\\
 
 # Files to compile.
-	TARGETS     = main.cpp
+	TARGETS     = main.cpp winxd.cpp
+	OBJS        = $(TARGETS:.cpp=.o)
 	TARGET_RES = res\\mandelbrotInfo.rc
 
 # Output file name.
@@ -47,13 +48,15 @@ endif
 execute: $(BUILD_LIB)$(EXECUTABLE)
 	$(QUITE)$(BUILD_LIB)$(EXECUTABLE)
 
-compile: $(TARGETS) resFile
+compile: $(OBJS) resFile
 	$(QUITE) cls
-	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGETS)  \
-		-o $(BUILD_LIB)$(TARGETS:.cpp=.o)
-	$(QUITE) $(CC) $(CONSOLE) $(BUILD_LIB)$(TARGETS:.cpp=.o) \
-		$(TARGET_RES:.rc=.res) -L$(LIBRARY_PTR) $(LIBS)      \
+	$(QUITE) $(CC) $(CONSOLE) $(OBJS)                   \
+		$(TARGET_RES:.rc=.res) -L$(LIBRARY_PTR) $(LIBS) \
 		-o $(BUILD_LIB)$(EXECUTABLE)
+
+$(OBJS): %.o:%.cpp
+	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $<  \
+		-o $@
 
 resFile: $(TARGET_RES)
 	$(QUITE) $(RES_CC) $(TARGET_RES) -O coff \
@@ -61,5 +64,5 @@ resFile: $(TARGET_RES)
 
 clean:
 	del $(BUILD_LIB)$(EXECUTABLE) \
-	$(BUILD_LIB)*.o \
+	*.o \
 	$(TARGET_RES:.rc=.res)

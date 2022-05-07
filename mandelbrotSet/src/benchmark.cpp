@@ -1,9 +1,11 @@
-// Benchmark for mandelbrot set
+// File-tester.
+// Checks speed of calculus of different functions.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#include "mandelbrot.hpp"
+#include "setCalculationFunctions.h"
 
 const int WIDTH  = 1920;
 const int HEIGHT = 1080;
