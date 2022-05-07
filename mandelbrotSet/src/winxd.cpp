@@ -1,6 +1,5 @@
 // File with implimentation functions of winXd forms.
-
-#include "winxdConfig.h"
+#include "winxd.h"
 
 void setRectSettings(
 	sf::RectangleShape& rect,
@@ -25,8 +24,7 @@ void crossPlatformMessage(const char *title, const char *msg)
 }
 
 // Taken from GCC code as some versions don't have __cpuidex
-static __inline void
-__MY_ORIGINAL_cpuidex (int __cpuid_info[4], int __leaf, int __subleaf)
+static __inline void __MY_ORIGINAL_cpuidex (int __cpuid_info[4], int __leaf, int __subleaf)
 {
 	__asm__ __volatile__ ("cpuid\n\t"							                                         \
 		: "=a" (__cpuid_info[0]), "=b" (__cpuid_info[1]), "=c" (__cpuid_info[2]), "=d" (__cpuid_info[3]) \

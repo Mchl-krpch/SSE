@@ -2,7 +2,7 @@
 # on SDL2 library for windows 10.
 # Because SFML I used in Mandelbrot app
 
-	MODE = TEST
+	MODE = 
 
 # Compilers in project.
 # Standarg compiler for files *.cpp
