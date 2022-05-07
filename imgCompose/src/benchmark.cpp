@@ -4,7 +4,7 @@
 
 #include "compose.h"
 
-static const int ATTEMPTS = 10;
+static const int ATTEMPTS =  10;
 static const int width    = 500;
 static const int height   = 400;
 
@@ -13,8 +13,8 @@ static const int height   = 400;
 int main()
 {
 	uint32_t *foreground = (uint32_t *)calloc(width * height, sizeof(uint32_t));
-	uint32_t *backgroung = (uint32_t *)calloc(width * height, sizeof(uint32_t));
-	uint32_t *output = (uint32_t *)calloc(width * height, sizeof(uint32_t));
+	uint32_t *background = (uint32_t *)calloc(width * height, sizeof(uint32_t));
+	uint32_t *output     = (uint32_t *)calloc(width * height, sizeof(uint32_t));
 
 	time_t startTime = 0;
 
@@ -29,14 +29,14 @@ int main()
 				{
 					CalculateNewPixels(
 						foreground + width * y + x, 
-						backgroung + width * y + x, 
+						background + width * y + x, 
 						output     + width * y + x);
 				}
 			}
 		}
 	}
 
-	printf("[%15s] time spend approximation: %.3lf\n", "SSE-OPTIMIZATION",
+	printf("%20s: time spend approximation: %.3lf\n", "SSE-OPTIMIZATION",
 		((double)(clock()) - startTime) / (ATTEMPTS * CLOCKS_PER_SEC) );
 
 	startTime = clock();
@@ -50,15 +50,18 @@ int main()
 				{
 					CalculateNewPixelsSlow(
 						foreground + width * y + x, 
-						backgroung + width * y + x, 
+						background + width * y + x, 
 						output     + width * y + x);
 				}
 			}
 		}
 	}
 
-	printf("[%15s] time spend approximation: %.3lf\n", "NO-OPTIMIZATION",
+	printf("%20s: time spend approximation: %.3lf\n", "NO-OPTIMIZATION",
 		((double)(clock()) - startTime) / (ATTEMPTS * CLOCKS_PER_SEC) );
+
+	free(foreground);
+	free(background);
 
 	return 0;
 }

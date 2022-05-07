@@ -13,8 +13,8 @@
 	CC_FLAGS   = -mavx -mavx512f -mfma -O0
 
 	RES_TARGET = res.rc
-	TARGETS    = main.cpp compose.cpp
-# 	TARGETS    = benchmark.cpp compose.cpp
+# 	TARGETS    = main.cpp compose.cpp
+	TARGETS    = benchmark.cpp compose.cpp
 	OBJS       = $(TARGETS:.cpp=.o)
 
 # Name of output built program.
@@ -39,21 +39,16 @@
 all: res execute
 
 execute: $(BUILD_FOLDER)$(EXECUTABLE)
-	@$(BUILD_FOLDER)$(EXECUTABLE) $(IMAGES_TO_COMPOSE)
+	@=$(BUILD_FOLDER)$(EXECUTABLE) $(IMAGES_TO_COMPOSE)
 
 res: $(RESOURCES)$(RES_TARGET)
-	@$(RES_CC) $(RESOURCES)$(RES_TARGET) -O coff \
-			-o $(RESOURCES)$(RES_TARGET:.rc=.res)
+	@$(RES_CC) $(RESOURCES)$(RES_TARGET) -O coff -o $(RESOURCES)$(RES_TARGET:.rc=.res)
 
 $(BUILD_FOLDER)$(EXECUTABLE): $(OBJS)
-	@$(CC) $(CONSOLE) $(OBJS) $(RESOURCES)$(RES_TARGET:.rc=.res) \
-					-L$(LIBRARY_FOLDER) $(LIBS)                  \
-				    -o$(BUILD_FOLDER)$(EXECUTABLE)
+	@$(CC) $(CONSOLE) $(OBJS) $(RESOURCES)$(RES_TARGET:.rc=.res) -L$(LIBRARY_FOLDER) $(LIBS) -o$(BUILD_FOLDER)$(EXECUTABLE)
 
 $(OBJS): %.o:%.cpp
-	@$(CC) $(CC_FLAGS) -I$(INCLUDE_FOLDER) -c $< \
-					  -o $@
+	@$(CC) $(CC_FLAGS) -I$(INCLUDE_FOLDER) -c $< -o $@
 
 clean:
 	del $(BUILD_FOLDER)$(EXECUTABLE) *.o *.res
-	cls
