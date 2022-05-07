@@ -1,3 +1,5 @@
+// File with implimentation functions of winXd forms.
+
 #include "winxdConfig.h"
 
 void setRectSettings(

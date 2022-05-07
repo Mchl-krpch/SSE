@@ -3,7 +3,7 @@
 
 // Icon
 /////////////////////////////////////////////////////////////////////////////
-IDI_ICON1 ICON "res\\icon.ico"
+IDI_ICON1 ICON "icon.ico"
 
 1 VERSIONINFO
 FILEVERSION 3,7,3,0

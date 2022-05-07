@@ -1,3 +1,5 @@
+// File with implementation of functions for calculating a picture in a set.
+
 #include "winxdConfig.h"
 
 static int getDotColor(double t)
