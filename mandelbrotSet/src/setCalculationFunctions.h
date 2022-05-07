@@ -48,7 +48,7 @@ typedef struct
 	float x_shift = -0.3;
 	float y_shift =    0;
 
-	int MAX_CHECK = 256;
+	int MAX_CHECK = 1024;
 	
 	const int      mouseMovementSensivity  = 25000;
 	const uint32_t BLACK_COLOR_PIXEL       = 0xFF000000;

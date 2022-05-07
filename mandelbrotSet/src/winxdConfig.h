@@ -109,8 +109,8 @@ private:// Constants.
 	sf::Vector2i mousePosition;
 
 	 // Start width and height of window
-	int WIDTH  = 1200;
-	int HEIGHT =  800;
+	int WIDTH  = 1920;
+	int HEIGHT = 1080;
 
 	 // Variables that will store the dimensions of the
 	 // window before Full Screen mode 
