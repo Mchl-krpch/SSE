@@ -29,11 +29,11 @@
 	BUILD_LIB   = ..\\build\\
 
 # Files to compile.
-	TARGET     = executor
-	TARGET_RES = res/mandelbrotInfo
+	TARGETS     = main.cpp
+	TARGET_RES = res\\mandelbrotInfo.rc
 
 # Output file name.
-	EXECUTABLE = mandelbrotSet
+	EXECUTABLE = mandelbrotSet.exe
 
 # Check different types of make process
 ifeq ($(MAKE_MODE), DEBUG)
@@ -44,17 +44,22 @@ QUITE += @
 all: compile execute
 endif
 
-execute: $(BUILD_LIB)$(EXECUTABLE).exe
+execute: $(BUILD_LIB)$(EXECUTABLE)
 	$(QUITE)$(BUILD_LIB)$(EXECUTABLE)
 
-compile: $(TARGET).cpp
+compile: $(TARGETS) resFile
 	$(QUITE) cls
-	$(QUITE) $(RES_CC) $(TARGET_RES).rc -O coff \
-		-o $(TARGET_RES).res
-	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGET).cpp \
-		-o $(BUILD_LIB)$(TARGET).o
-	$(QUITE) $(CC) $(CONSOLE) $(BUILD_LIB)$(TARGET).o $(TARGET_RES).res -L$(LIBRARY_PTR) $(LIBS) \
-		-o $(BUILD_LIB)$(EXECUTABLE).exe
+	$(QUITE) $(CC) $(CFLAGS) -I$(INCLUDE_PTR) -c $(TARGETS)  \
+		-o $(BUILD_LIB)$(TARGETS:.cpp=.o)
+	$(QUITE) $(CC) $(CONSOLE) $(BUILD_LIB)$(TARGETS:.cpp=.o) \
+		$(TARGET_RES:.rc=.res) -L$(LIBRARY_PTR) $(LIBS)      \
+		-o $(BUILD_LIB)$(EXECUTABLE)
+
+resFile: $(TARGET_RES)
+	$(QUITE) $(RES_CC) $(TARGET_RES) -O coff \
+		-o $(TARGET_RES:.rc=.res)
 
 clean:
-	del $(BUILD_LIB)$(EXECUTABLE).exe $(BUILD_LIB)*.o
+	del $(BUILD_LIB)$(EXECUTABLE) \
+	$(BUILD_LIB)*.o \
+	$(TARGET_RES:.rc=.res)

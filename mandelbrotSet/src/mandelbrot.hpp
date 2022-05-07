@@ -1,17 +1,19 @@
 #ifndef _mandelbrot_
 #define _mandelbrot_
 
-#include <cpuid.h>
-
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <immintrin.h>
 #include <emmintrin.h>
+
 // For __cpuid
 #ifdef _WIN32
 #include <intrin.h>
+#else
+#include <cpuid.h>
 #endif
+
 #include <SFML/Graphics.hpp>
 
 // FOR AVX 256

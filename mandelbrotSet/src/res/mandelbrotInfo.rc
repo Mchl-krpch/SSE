@@ -6,7 +6,7 @@ BEGIN
   BEGIN
     BLOCK "080904E4"
     BEGIN
-      VALUE "OriginalFilename", "my_app.exe"
+      VALUE "OriginalFilename", "MandelbrotSet.exe"
       VALUE "ProductName", "Mandelbrot set"
       VALUE "ProductVersion", "1.0"
     END
